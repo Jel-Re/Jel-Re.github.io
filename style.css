@@ -1,0 +1,134 @@
+:root {
+  --blau: #095797;
+  --blau-hell: #1d78c9;
+  --gruen: #1e7d4f;
+  --rot: #b3261e;
+  --text: #1a1c20;
+  --grau: #eef1f5;
+  --rand: #d5dbe3;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 2rem 1rem 3rem;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.5;
+  color: var(--text);
+  background: linear-gradient(160deg, var(--blau) 0%, var(--blau-hell) 55%, #e9eef4 55.1%);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+.header {
+  max-width: 640px;
+  margin: 0 auto 1.5rem;
+  text-align: center;
+  color: #fff;
+}
+
+.flag { font-size: 2.5rem; line-height: 1; }
+.header h1 { margin: 0.3rem 0 0.2rem; font-size: 2rem; }
+.subtitle { margin: 0; opacity: 0.9; }
+
+.card {
+  max-width: 640px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.75rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.hidden { display: none; }
+
+.btn {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.7rem 1.4rem;
+  font-size: 1rem;
+  font-family: inherit;
+  color: #fff;
+  background: var(--blau);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn:hover { background: var(--blau-hell); }
+
+/* Fortschritt */
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+  color: #5a6472;
+}
+
+.bar {
+  flex: 1;
+  height: 6px;
+  background: var(--grau);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+#bar-fill {
+  height: 100%;
+  width: 0;
+  background: var(--blau);
+  transition: width 0.25s ease;
+}
+
+#question { margin: 1rem 0 1.25rem; font-size: 1.25rem; }
+
+/* Antworten */
+.answers {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.answers button {
+  width: 100%;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  font-family: inherit;
+  color: var(--text);
+  background: #fff;
+  border: 2px solid var(--rand);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.answers button:hover:not(:disabled) { border-color: var(--blau); }
+.answers button:disabled { cursor: default; }
+
+.answers button.richtig {
+  border-color: var(--gruen);
+  background: #e7f5ee;
+}
+
+.answers button.falsch {
+  border-color: var(--rot);
+  background: #fbeceb;
+}
+
+.feedback { min-height: 1.5rem; margin: 1rem 0 0; font-weight: 600; }
+.feedback.richtig { color: var(--gruen); }
+.feedback.falsch { color: var(--rot); }
+
+.score { font-size: 1.5rem; font-weight: 700; margin: 0.5rem 0; }
+
+.footer {
+  max-width: 640px;
+  margin: 1.5rem auto 0;
+  text-align: center;
+  font-size: 0.85rem;
+  color: #5a6472;
+}

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Québec-Quiz</title>
+  <meta name="description" content="Ein kleines Quiz über die kanadische Provinz Québec.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="header">
+    <div class="flag" aria-hidden="true">⚜</div>
+    <h1>Québec-Quiz</h1>
+    <p class="subtitle">Wie gut kennst du die französischsprachige Provinz Kanadas?</p>
+  </header>
+
+  <main class="card">
+    <!-- Startbildschirm -->
+    <section id="start" class="screen">
+      <p>10 Fragen, jeweils vier Antwortmöglichkeiten. Viel Erfolg!</p>
+      <button id="start-btn" class="btn">Quiz starten</button>
+    </section>
+
+    <!-- Quiz -->
+    <section id="quiz" class="screen hidden">
+      <div class="progress">
+        <span id="counter">Frage 1 von 10</span>
+        <div class="bar"><div id="bar-fill"></div></div>
+      </div>
+      <h2 id="question">Frage</h2>
+      <ul id="answers" class="answers"></ul>
+      <p id="feedback" class="feedback"></p>
+      <button id="next-btn" class="btn hidden">Weiter</button>
+    </section>
+
+    <!-- Ergebnis -->
+    <section id="result" class="screen hidden">
+      <h2>Geschafft!</h2>
+      <p class="score"><span id="score">0</span> von <span id="total">10</span> richtig</p>
+      <p id="verdict"></p>
+      <button id="restart-btn" class="btn">Nochmal spielen</button>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Gebaut mit HTML, CSS und ein bisschen JavaScript.</p>
+  </footer>
+
+  <script src="quiz.js"></script>
+</body>
+</html>
