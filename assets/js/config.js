@@ -21,7 +21,7 @@
  *                        und README.md.
  */
 window.QUIZ_CONFIG = {
-  backend: "local",
+  backend: "supabase",
 
   supabase: {
     url: "",      // z. B. "https://abcdefghijkl.supabase.co"
