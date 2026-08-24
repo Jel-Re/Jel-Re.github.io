@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin-Panel – Quiz</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9D%93%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<div class="wrap wide">
+
+  <!-- Anmeldung -->
+  <div id="login" class="card hidden">
+    <h1>Admin-Panel</h1>
+    <p class="muted" id="login-hint"></p>
+    <form id="login-form">
+      <div class="field" id="field-email">
+        <label for="login-email">E-Mail</label>
+        <input type="email" id="login-email" autocomplete="username">
+      </div>
+      <div class="field">
+        <label for="login-password" id="login-password-label">Passwort</label>
+        <input type="password" id="login-password" autocomplete="current-password" required>
+      </div>
+      <p id="login-error" class="notice error hidden"></p>
+      <button type="submit" class="btn primary block">Anmelden</button>
+    </form>
+    <p class="muted" style="margin-top:1rem"><a href="index.html">Zurück zum Quiz</a></p>
+  </div>
+
+  <!-- Panel -->
+  <div id="panel" class="hidden">
+
+    <div class="row between" style="margin-bottom:1rem">
+      <h1 style="margin:0">Admin-Panel</h1>
+      <div class="row">
+        <span class="badge" id="mode-badge"></span>
+        <button type="button" class="btn small" id="btn-logout">Abmelden</button>
+      </div>
+    </div>
+
+    <div id="global-message" class="notice hidden"></div>
+
+    <div class="tabs">
+      <button type="button" class="btn active" data-tab="quizzes">Quizze</button>
+      <button type="button" class="btn" data-tab="results">Ergebnisse</button>
+    </div>
+
+    <!-- Tab: Quizze -->
+    <section id="tab-quizzes">
+
+      <div class="card" id="active-card">
+        <h3>Aktives Quiz</h3>
+        <p id="active-name" class="muted"></p>
+        <div class="row" id="active-actions"></div>
+      </div>
+
+      <div class="card" id="quiz-list-card">
+        <div class="row between" style="margin-bottom:.5rem">
+          <h3 style="margin:0">Alle Quizze</h3>
+          <button type="button" class="btn primary small" id="btn-new-quiz">+ Neues Quiz</button>
+        </div>
+        <div id="quiz-list"></div>
+      </div>
+
+      <!-- Editor -->
+      <div class="card hidden" id="editor">
+        <h2 id="editor-title">Quiz bearbeiten</h2>
+
+        <div class="field">
+          <label for="quiz-title">Titel</label>
+          <input type="text" id="quiz-title" maxlength="120" placeholder="z. B. Allgemeinwissen">
+        </div>
+
+        <div class="field">
+          <label for="quiz-description">Beschreibung <span class="muted">(optional)</span></label>
+          <textarea id="quiz-description" maxlength="500"
+                    placeholder="Kurzer Hinweis, der vor dem Start angezeigt wird"></textarea>
+        </div>
+
+        <h3 style="margin-top:1.5rem">Fragen</h3>
+        <div id="questions"></div>
+
+        <button type="button" class="btn small" id="btn-add-question">+ Frage hinzufügen</button>
+
+        <p id="editor-error" class="notice error hidden" style="margin-top:1rem"></p>
+
+        <div class="row" style="margin-top:1.5rem">
+          <button type="button" class="btn primary" id="btn-save-quiz">Speichern</button>
+          <button type="button" class="btn" id="btn-cancel-quiz">Abbrechen</button>
+          <span class="spacer"></span>
+          <button type="button" class="btn small" id="btn-save-activate">Speichern &amp; aktivieren</button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Tab: Ergebnisse -->
+    <section id="tab-results" class="hidden">
+      <div class="card">
+        <div class="row between" style="margin-bottom:1rem">
+          <h3 style="margin:0">Ergebnisse</h3>
+          <div class="row">
+            <button type="button" class="btn small" id="btn-export">Als CSV exportieren</button>
+            <button type="button" class="btn small danger" id="btn-clear-results">Löschen</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="results-filter">Quiz</label>
+          <select id="results-filter"></select>
+        </div>
+
+        <div id="results-summary" class="muted"></div>
+        <div class="table-scroll">
+          <table id="results-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Quiz</th>
+                <th>Punkte</th>
+                <th>%</th>
+                <th>Zeitpunkt</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+</div>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/db.js"></script>
+<script src="assets/js/admin.js"></script>
+</body>
+</html>

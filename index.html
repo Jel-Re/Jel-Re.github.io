@@ -1,98 +1,73 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="de">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Quiz sur le Québec</title>
-<style>
-  body {
-    max-width: 500px;
-    margin: 2rem auto;
-    padding: 0 1rem;
-    font-family: system-ui, sans-serif;
-    line-height: 1.5;
-    color: #1a1c20;
-  }
-  h1 { color: #095797; }
-  button {
-    display: block;
-    width: 100%;
-    margin: .5rem 0;
-    padding: .7rem;
-    font: inherit;
-    text-align: left;
-    background: #fff;
-    border: 2px solid #ccc;
-    border-radius: 6px;
-    cursor: pointer;
-  }
-  button:hover { border-color: #095797; }
-  .juste { border-color: #1e7d4f; background: #e7f5ee; }
-  .faux  { border-color: #b3261e; background: #fbeceb; }
-  #score { font-size: 1.2rem; font-weight: bold; }
-</style>
+<title>Quiz</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9D%93%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
 
-<h1>⚜ Quiz sur le Québec</h1>
-<p id="numero"></p>
-<h2 id="question"></h2>
-<div id="reponses"></div>
-<p id="score"></p>
+<div class="wrap">
 
-<script>
-const questions = [
-  { q: "Quelle est la capitale du Québec ?",        r: ["Montréal", "Québec", "Ottawa"],                     bonne: 1 },
-  { q: "Quelle est la plus grande ville ?",         r: ["Montréal", "Laval", "Gatineau"],                    bonne: 0 },
-  { q: "Quelle est la langue officielle ?",         r: ["L'anglais", "Le français", "Les deux"],             bonne: 1 },
-  { q: "Quel fleuve traverse le Québec ?",          r: ["Le Saint-Laurent", "Le Mackenzie", "Le Fraser"],    bonne: 0 },
-  { q: "Quelle est la devise du Québec ?",          r: ["Je me souviens", "Liberté", "Vive le Québec"],      bonne: 0 },
-  { q: "Quel plat vient du Québec ?",               r: ["La poutine", "Le chili", "La paella"],              bonne: 0 },
-  { q: "Le Québec est le premier producteur de…",   r: ["Café", "Sirop d'érable", "Olives"],                 bonne: 1 }
-];
+  <div id="loading" class="card center">
+    <p class="muted">Quiz wird geladen …</p>
+  </div>
 
-let i = 0, points = 0;
+  <!-- Kein Quiz aktiv / Fehler -->
+  <div id="screen-empty" class="card center hidden">
+    <h1 id="empty-title">Gerade läuft kein Quiz</h1>
+    <p class="muted" id="empty-text">
+      Im Admin-Panel kann ein Quiz erstellt und aktiviert werden.
+      Danach startet es hier automatisch.
+    </p>
+    <p><a href="admin.html">Zum Admin-Panel</a></p>
+  </div>
 
-function afficher() {
-  const { q, r, bonne } = questions[i];
-  document.getElementById("numero").textContent = `Question ${i + 1} / ${questions.length}`;
-  document.getElementById("question").textContent = q;
+  <!-- Startbildschirm mit Namenseingabe -->
+  <div id="screen-start" class="card hidden">
+    <h1 id="start-title"></h1>
+    <p id="start-description" class="muted"></p>
+    <p class="muted" id="start-meta"></p>
 
-  const zone = document.getElementById("reponses");
-  zone.innerHTML = "";
+    <form id="start-form">
+      <div class="field">
+        <label for="player-name">Dein Name</label>
+        <input type="text" id="player-name" maxlength="60" autocomplete="name"
+               placeholder="z. B. Alex" required>
+      </div>
+      <p id="start-error" class="notice error hidden"></p>
+      <button type="submit" class="btn primary block">Quiz starten</button>
+    </form>
+  </div>
 
-  r.forEach((texte, n) => {
-    const b = document.createElement("button");
-    b.textContent = texte;
-    b.onclick = () => {
-      if (n === bonne) points++;
-      zone.querySelectorAll("button").forEach((x, m) => {
-        x.disabled = true;
-        if (m === bonne) x.className = "juste";
-        else if (m === n) x.className = "faux";
-      });
-      setTimeout(suivant, 900);
-    };
-    zone.appendChild(b);
-  });
-}
+  <!-- Laufendes Quiz -->
+  <div id="screen-play" class="card hidden">
+    <div class="progress"><span id="progress-bar" style="width:0%"></span></div>
+    <p class="muted" id="play-counter"></p>
+    <h2 id="play-question"></h2>
+    <div id="play-answers"></div>
+  </div>
 
-function suivant() {
-  i++;
-  if (i < questions.length) {
-    afficher();
-  } else {
-    document.getElementById("numero").textContent = "";
-    document.getElementById("question").textContent = "Terminé !";
-    document.getElementById("reponses").innerHTML =
-      '<button onclick="location.reload()">Rejouer</button>';
-    document.getElementById("score").textContent =
-      `Score : ${points} / ${questions.length}`;
-  }
-}
+  <!-- Ergebnis -->
+  <div id="screen-done" class="card hidden">
+    <h1>Geschafft!</h1>
+    <p id="done-greeting" class="muted"></p>
+    <p class="score-big" id="done-score"></p>
+    <p class="muted" id="done-percent"></p>
+    <p id="done-saved" class="muted"></p>
+    <h3 style="margin-top:1.5rem">Deine Antworten</h3>
+    <div id="done-review"></div>
+    <p style="margin-top:1.5rem">
+      <button type="button" class="btn" id="btn-restart">Noch einmal spielen</button>
+    </p>
+  </div>
 
-afficher();
-</script>
+</div>
 
+<script src="assets/js/config.js"></script>
+<script src="assets/js/db.js"></script>
+<script src="assets/js/quiz.js"></script>
 </body>
 </html>
