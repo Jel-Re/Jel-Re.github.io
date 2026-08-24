@@ -1,15 +1,7 @@
 # Jel-Re.github.io
 
-Ein kleines Quiz über die kanadische Provinz Québec – 10 Fragen mit je vier
-Antwortmöglichkeiten, sofortigem Feedback und Auswertung am Ende.
+Un petit quiz sur le Québec : 7 questions, 3 réponses possibles, un score à la fin.
 
-## Dateien
-
-- `index.html` – Struktur der Seite (Start, Quiz, Ergebnis)
-- `style.css` – Layout und Farben
-- `quiz.js` – Fragen und Spiellogik
-
-Kein Build, keine Abhängigkeiten: `index.html` im Browser öffnen genügt.
-
-Neue Fragen lassen sich am Anfang von `quiz.js` im Array `fragen` ergänzen
-(`richtig` ist der Index der korrekten Antwort, beginnend bei 0).
+Tout tient dans `index.html` — pas de dépendances, pas de build.
+Pour ajouter une question, complétez le tableau `questions` dans le script
+(`bonne` est l'indice de la bonne réponse, à partir de 0).

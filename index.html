@@ -1,51 +1,98 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="fr">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Québec-Quiz</title>
-  <meta name="description" content="Ein kleines Quiz über die kanadische Provinz Québec.">
-  <link rel="stylesheet" href="style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quiz sur le Québec</title>
+<style>
+  body {
+    max-width: 500px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+    font-family: system-ui, sans-serif;
+    line-height: 1.5;
+    color: #1a1c20;
+  }
+  h1 { color: #095797; }
+  button {
+    display: block;
+    width: 100%;
+    margin: .5rem 0;
+    padding: .7rem;
+    font: inherit;
+    text-align: left;
+    background: #fff;
+    border: 2px solid #ccc;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  button:hover { border-color: #095797; }
+  .juste { border-color: #1e7d4f; background: #e7f5ee; }
+  .faux  { border-color: #b3261e; background: #fbeceb; }
+  #score { font-size: 1.2rem; font-weight: bold; }
+</style>
 </head>
 <body>
-  <header class="header">
-    <div class="flag" aria-hidden="true">⚜</div>
-    <h1>Québec-Quiz</h1>
-    <p class="subtitle">Wie gut kennst du die französischsprachige Provinz Kanadas?</p>
-  </header>
 
-  <main class="card">
-    <!-- Startbildschirm -->
-    <section id="start" class="screen">
-      <p>10 Fragen, jeweils vier Antwortmöglichkeiten. Viel Erfolg!</p>
-      <button id="start-btn" class="btn">Quiz starten</button>
-    </section>
+<h1>⚜ Quiz sur le Québec</h1>
+<p id="numero"></p>
+<h2 id="question"></h2>
+<div id="reponses"></div>
+<p id="score"></p>
 
-    <!-- Quiz -->
-    <section id="quiz" class="screen hidden">
-      <div class="progress">
-        <span id="counter">Frage 1 von 10</span>
-        <div class="bar"><div id="bar-fill"></div></div>
-      </div>
-      <h2 id="question">Frage</h2>
-      <ul id="answers" class="answers"></ul>
-      <p id="feedback" class="feedback"></p>
-      <button id="next-btn" class="btn hidden">Weiter</button>
-    </section>
+<script>
+const questions = [
+  { q: "Quelle est la capitale du Québec ?",        r: ["Montréal", "Québec", "Ottawa"],                     bonne: 1 },
+  { q: "Quelle est la plus grande ville ?",         r: ["Montréal", "Laval", "Gatineau"],                    bonne: 0 },
+  { q: "Quelle est la langue officielle ?",         r: ["L'anglais", "Le français", "Les deux"],             bonne: 1 },
+  { q: "Quel fleuve traverse le Québec ?",          r: ["Le Saint-Laurent", "Le Mackenzie", "Le Fraser"],    bonne: 0 },
+  { q: "Quelle est la devise du Québec ?",          r: ["Je me souviens", "Liberté", "Vive le Québec"],      bonne: 0 },
+  { q: "Quel plat vient du Québec ?",               r: ["La poutine", "Le chili", "La paella"],              bonne: 0 },
+  { q: "Le Québec est le premier producteur de…",   r: ["Café", "Sirop d'érable", "Olives"],                 bonne: 1 }
+];
 
-    <!-- Ergebnis -->
-    <section id="result" class="screen hidden">
-      <h2>Geschafft!</h2>
-      <p class="score"><span id="score">0</span> von <span id="total">10</span> richtig</p>
-      <p id="verdict"></p>
-      <button id="restart-btn" class="btn">Nochmal spielen</button>
-    </section>
-  </main>
+let i = 0, points = 0;
 
-  <footer class="footer">
-    <p>Gebaut mit HTML, CSS und ein bisschen JavaScript.</p>
-  </footer>
+function afficher() {
+  const { q, r, bonne } = questions[i];
+  document.getElementById("numero").textContent = `Question ${i + 1} / ${questions.length}`;
+  document.getElementById("question").textContent = q;
 
-  <script src="quiz.js"></script>
+  const zone = document.getElementById("reponses");
+  zone.innerHTML = "";
+
+  r.forEach((texte, n) => {
+    const b = document.createElement("button");
+    b.textContent = texte;
+    b.onclick = () => {
+      if (n === bonne) points++;
+      zone.querySelectorAll("button").forEach((x, m) => {
+        x.disabled = true;
+        if (m === bonne) x.className = "juste";
+        else if (m === n) x.className = "faux";
+      });
+      setTimeout(suivant, 900);
+    };
+    zone.appendChild(b);
+  });
+}
+
+function suivant() {
+  i++;
+  if (i < questions.length) {
+    afficher();
+  } else {
+    document.getElementById("numero").textContent = "";
+    document.getElementById("question").textContent = "Terminé !";
+    document.getElementById("reponses").innerHTML =
+      '<button onclick="location.reload()">Rejouer</button>';
+    document.getElementById("score").textContent =
+      `Score : ${points} / ${questions.length}`;
+  }
+}
+
+afficher();
+</script>
+
 </body>
 </html>
