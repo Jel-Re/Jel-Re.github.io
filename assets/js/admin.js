@@ -260,19 +260,19 @@
     });
   }
 
-  /* Das ursprüngliche Québec-Quiz dieser Seite – als Startpunkt zum Ausprobieren. */
+  /* Kleines Beispiel-Quiz, damit das Panel nicht leer startet. */
   function sampleQuiz() {
     return {
-      title: "Quiz sur le Québec",
-      description: "Sept questions sur le Québec.",
+      title: "Allgemeinwissen",
+      description: "Sieben Fragen zum Aufwärmen.",
       questions: [
-        { text: "Quelle est la capitale du Québec ?", answers: ["Montréal", "Québec", "Ottawa"], correct: 1 },
-        { text: "Quelle est la plus grande ville ?", answers: ["Montréal", "Laval", "Gatineau"], correct: 0 },
-        { text: "Quelle est la langue officielle ?", answers: ["L'anglais", "Le français", "Les deux"], correct: 1 },
-        { text: "Quel fleuve traverse le Québec ?", answers: ["Le Saint-Laurent", "Le Mackenzie", "Le Fraser"], correct: 0 },
-        { text: "Quelle est la devise du Québec ?", answers: ["Je me souviens", "Liberté", "Vive le Québec"], correct: 0 },
-        { text: "Quel plat vient du Québec ?", answers: ["La poutine", "Le chili", "La paella"], correct: 0 },
-        { text: "Le Québec est le premier producteur de…", answers: ["Café", "Sirop d'érable", "Olives"], correct: 1 }
+        { text: "Wie viele Bundesländer hat Deutschland?", answers: ["14", "16", "18"], correct: 1 },
+        { text: "Welcher Planet ist der Sonne am nächsten?", answers: ["Merkur", "Venus", "Mars"], correct: 0 },
+        { text: "Welches ist das größte Organ des Menschen?", answers: ["Leber", "Lunge", "Haut"], correct: 2 },
+        { text: "Wie viele Minuten hat ein Fußballspiel regulär?", answers: ["80", "90", "100"], correct: 1 },
+        { text: "Welche Farbe entsteht aus Blau und Gelb?", answers: ["Grün", "Orange", "Violett"], correct: 0 },
+        { text: "Wer schrieb den Faust?", answers: ["Schiller", "Goethe", "Lessing"], correct: 1 },
+        { text: "Wie viele Sekunden hat eine Stunde?", answers: ["360", "3.600", "36.000"], correct: 1 }
       ]
     };
   }
