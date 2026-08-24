@@ -32,6 +32,11 @@
   /* --- Laden --- */
 
   async function init() {
+    if (Store.configError) {
+      showEmpty("Die Website ist noch nicht fertig eingerichtet", Store.configError);
+      return;
+    }
+
     var params = new URLSearchParams(location.search);
     var wanted = params.get("quiz");
 

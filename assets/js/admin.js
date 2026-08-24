@@ -684,7 +684,12 @@
 
   setupLogin();
 
-  if (!Store.auth.required || Store.auth.isLoggedIn()) {
+  if (Store.configError) {
+    // Ohne Zugangsdaten hat eine Anmeldemaske keinen Zweck.
+    el("login").classList.remove("hidden");
+    el("login-form").classList.add("hidden");
+    el("login-hint").textContent = Store.configError;
+  } else if (!Store.auth.required || Store.auth.isLoggedIn()) {
     openPanel();
   } else {
     el("login").classList.remove("hidden");

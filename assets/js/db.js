@@ -389,12 +389,21 @@
     }
   };
 
+  /* Backend "supabase" ohne Zugangsdaten ist ein Konfigurationsfehler und kein
+     Laufzeitproblem – die Seiten sagen dann, was zu tun ist, statt in einen
+     unverständlichen Netzwerkfehler zu laufen. */
+  var configError = (MODE === "supabase" && !sbConfigOk())
+    ? "Der Datenbank-Modus ist aktiv, aber es fehlen die Zugangsdaten. " +
+      "Bitte url und anonKey in assets/js/config.js eintragen (siehe README.md)."
+    : null;
+
   var backend = MODE === "supabase" ? SupabaseBackend : LocalBackend;
   var auth = MODE === "supabase" ? SupabaseAuth : OpenAuth;
 
   window.Store = Object.assign({}, backend, {
     mode: MODE,
     auth: auth,
-    uid: uid
+    uid: uid,
+    configError: configError
   });
 })();
