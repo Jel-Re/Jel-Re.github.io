@@ -15,11 +15,13 @@ Reines HTML/CSS/JavaScript, kein Build-Schritt, läuft auf GitHub Pages.
 ## Schnellstart
 
 1. Seite öffnen, dann `admin.html` aufrufen.
-2. Anmelden – das Passwort steht in `assets/js/config.js` (`localAdminPasscode`,
-   Standard: `admin`). **Bitte ändern.**
-3. „+ Neues Quiz“ → Titel, Fragen und Antworten eintragen, die richtige Antwort
+2. „+ Neues Quiz“ → Titel, Fragen und Antworten eintragen, die richtige Antwort
    per Radiobutton markieren.
-4. „Speichern & aktivieren“ – ab jetzt zeigt die Startseite dieses Quiz.
+3. „Speichern & aktivieren“ – ab jetzt zeigt die Startseite dieses Quiz.
+
+Im Standardmodus verlangt das Admin-Panel kein Passwort. Warum das kein
+Sicherheitsproblem ist – und wie echter Schutz aussieht – steht unter
+[Zugangsschutz](#zugangsschutz).
 
 Neben dem aktiven Quiz kann jedes Quiz auch direkt verlinkt werden:
 `index.html?quiz=<id>` – den Link liefert der „Link“-Button in der Quiz-Liste.
@@ -39,8 +41,9 @@ Wichtig: Die Daten bleiben **in genau diesem Browser**. Ein Quiz, das du hier
 aktivierst, sehen andere Besucher nicht – sie haben ihren eigenen, leeren
 Speicher. Dieser Modus eignet sich zum Ausprobieren, für eine Demo oder wenn
 das Quiz nur auf einem Gerät läuft (z. B. ein Tablet, das herumgereicht wird).
-Auch das Admin-Passwort ist hier nur eine Sichtblende, keine echte Sicherheit:
-Der Code liegt im Browser und jeder kann ihn lesen.
+
+Deshalb gibt es hier auch keine Anmeldung: es existieren keine gemeinsamen
+Daten, die zu schützen wären.
 
 ### `backend: "supabase"` (gemeinsame Datenbank)
 
@@ -56,7 +59,8 @@ Einrichtung:
    die Tabellen `quizzes`, `settings` und `results` an und schaltet Row Level
    Security ein.
 3. Unter **Authentication → Users** einen Admin-Benutzer mit E-Mail und
-   Passwort anlegen.
+   Passwort anlegen. Dieses Passwort wird in Supabase gespeichert und steht
+   nirgends im Repository.
 4. In `assets/js/config.js` eintragen:
 
    ```js
@@ -82,6 +86,57 @@ gedacht. Geschützt wird über die Row-Level-Security-Regeln aus
 Besucher können also insbesondere **keine** fremden Ergebnisse lesen und keine
 Quizze verändern. Den `service_role`-Key niemals ins Repository legen.
 
+## Zugangsschutz
+
+Diese Website besteht ausschließlich aus statischen Dateien. Alles, was
+ausgeliefert wird – HTML, CSS, JavaScript, auch `config.js` – kann jeder
+Besucher im Browser lesen. **Ein Passwort im Quelltext ist deshalb prinzipiell
+kein Schutz**, egal wie es abgelegt oder verschleiert wird: wer die Seite laden
+kann, kann es auch auslesen. Ein Hash hilft nicht, denn die Prüfung selbst
+läuft im Browser des Angreifers und lässt sich überspringen.
+
+Echte Zugangskontrolle braucht eine Stelle, die der Angreifer nicht
+kontrolliert – also einen Server. Daraus ergeben sich die zwei Modi:
+
+**Lokaler Modus – keine Anmeldung, weil es nichts zu schützen gibt.**
+Quizze und Ergebnisse liegen im `localStorage` des jeweiligen Besuchers. Wer
+`admin.html` öffnet, bearbeitet ausschließlich seinen eigenen Browserspeicher;
+für andere ist dort nichts einzusehen und nichts zu zerstören. Eine
+Passwortabfrage würde hier nur Sicherheit vortäuschen, die es nicht gibt.
+
+**Supabase-Modus – echte Anmeldung, serverseitig durchgesetzt.**
+Das Admin-Panel meldet sich per Supabase Auth an. Das Passwort liegt in
+Supabase, nicht im Repository. Entscheidend ist: die Berechtigungen werden
+nicht im Browser geprüft, sondern von der Datenbank über Row Level Security.
+Selbst wer das JavaScript manipuliert, kann ohne gültiges Token nichts
+schreiben – die Datenbank lehnt den Zugriff ab.
+
+Weitere Maßnahmen in diesem Modus:
+
+- Das Zugriffstoken liegt in `sessionStorage`, nicht in `localStorage`: es
+  verschwindet, wenn der Tab geschlossen wird.
+- Abgelaufene Token werden erkannt und verworfen; das Panel führt dann zurück
+  zum Login, statt eine kryptische Fehlermeldung zu zeigen.
+- „Abmelden“ meldet das Token auch serverseitig ab (`/auth/v1/logout`).
+- Die Fehlermeldung beim Login unterscheidet nicht zwischen falscher E-Mail und
+  falschem Passwort, verrät also nicht, welche Konten existieren.
+- Für ein starkes Admin-Passwort sorgt Supabase; dort lässt sich zusätzlich
+  Zwei-Faktor-Authentifizierung aktivieren.
+
+### Bekannte Grenze: die richtigen Antworten stehen im Browser
+
+Die Auswertung passiert im Browser des Spielers, also müssen ihn auch die
+richtigen Antworten erreichen. Wer die Entwicklerwerkzeuge öffnet, kann sie
+vor dem Beantworten einsehen. Das gilt für beide Modi und ist bei jedem
+clientseitig ausgewerteten Quiz so.
+
+Für ein Quiz unter Aufsicht (Schulung, Veranstaltung, Spaßrunde) ist das in der
+Regel egal. Wenn die Ergebnisse dagegen belastbar sein müssen, führt kein Weg
+an serverseitiger Auswertung vorbei: die Antworten werden dann nicht mehr
+ausgeliefert, sondern eine Datenbankfunktion nimmt die Tipps entgegen und gibt
+nur die Punktzahl zurück. Das ist bewusst noch nicht umgesetzt – sag Bescheid,
+wenn es gebraucht wird.
+
 ## Funktionen des Admin-Panels
 
 - Quizze anlegen, bearbeiten, duplizieren, löschen
@@ -98,7 +153,7 @@ index.html              Quiz für Besucher
 admin.html              Admin-Panel
 supabase-schema.sql     Tabellen + Zugriffsregeln für den Supabase-Modus
 assets/css/style.css    gemeinsames Stylesheet (hell/dunkel automatisch)
-assets/js/config.js     Konfiguration: Backend, Zugangsdaten, Passwort
+assets/js/config.js     Konfiguration: Backend und Supabase-Zugang (kein Passwort)
 assets/js/db.js         Datenzugriff, kapselt localStorage bzw. Supabase
 assets/js/quiz.js       Ablauf der Spieler-Seite
 assets/js/admin.js      Ablauf des Admin-Panels
