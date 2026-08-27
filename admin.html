@@ -18,10 +18,10 @@
     <form id="login-form">
       <div class="field" id="field-email">
         <label for="login-email">E-Mail</label>
-        <input type="email" id="login-email" autocomplete="username">
+        <input type="email" id="login-email" autocomplete="username" required>
       </div>
       <div class="field">
-        <label for="login-password" id="login-password-label">Passwort</label>
+        <label for="login-password">Passwort</label>
         <input type="password" id="login-password" autocomplete="current-password" required>
       </div>
       <p id="login-error" class="notice error hidden"></p>
@@ -41,6 +41,7 @@
       </div>
     </div>
 
+    <div id="mode-notice" class="notice hidden"></div>
     <div id="global-message" class="notice hidden"></div>
 
     <div class="tabs">

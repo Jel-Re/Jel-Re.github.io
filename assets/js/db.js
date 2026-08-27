@@ -135,14 +135,53 @@
    * ------------------------------------------------------------------ */
 
   var TOKEN_KEY = "quizapp.token";
+  var EXPIRY_KEY = "quizapp.token.expires";
 
   function sbConfigOk() {
     return !!(CFG.supabase && CFG.supabase.url && CFG.supabase.anonKey);
   }
 
+  /* Fehler, der signalisiert: die Anmeldung ist weg oder abgelaufen.
+     Das Admin-Panel zeigt daraufhin wieder den Login-Bildschirm. */
+  function AuthError(message) {
+    var e = new Error(message);
+    e.name = "AuthError";
+    e.isAuthError = true;
+    return e;
+  }
+
+  function sbStoreToken(accessToken, expiresInSeconds) {
+    try {
+      sessionStorage.setItem(TOKEN_KEY, accessToken);
+      var ms = (Number(expiresInSeconds) || 3600) * 1000;
+      sessionStorage.setItem(EXPIRY_KEY, String(Date.now() + ms));
+    } catch (e) { /* Speicher gesperrt – Token gilt dann nur für diese Seite */ }
+  }
+
+  function sbClearToken() {
+    try {
+      sessionStorage.removeItem(TOKEN_KEY);
+      sessionStorage.removeItem(EXPIRY_KEY);
+    } catch (e) { /* egal */ }
+  }
+
+  /* Merkt sich, ob die letzte Sitzung abgelaufen ist – nur damit die Meldung
+     an den Benutzer den Unterschied zu "nie angemeldet" benennen kann. */
+  var sessionExpired = false;
+
   function sbToken() {
     try {
-      return sessionStorage.getItem(TOKEN_KEY) || null;
+      var token = sessionStorage.getItem(TOKEN_KEY);
+      if (!token) return null;
+
+      // Abgelaufene Token gar nicht erst mitschicken.
+      var expires = Number(sessionStorage.getItem(EXPIRY_KEY) || 0);
+      if (expires && Date.now() >= expires) {
+        sbClearToken();
+        sessionExpired = true;
+        return null;
+      }
+      return token;
     } catch (e) {
       return null;
     }
@@ -175,6 +214,18 @@
         var err = await res.json();
         detail = err.message || err.error_description || err.error || "";
       } catch (e) { /* Antwort war kein JSON */ }
+
+      // 401/403 auf einem schreibenden Zugriff heißt: nicht (mehr) angemeldet.
+      // Die Datenbank hat den Zugriff verweigert - genau so soll es sein.
+      if (res.status === 401 || res.status === 403) {
+        if (token || sessionExpired) {
+          sbClearToken();
+          sessionExpired = false;
+          throw AuthError("Die Anmeldung ist abgelaufen. Bitte erneut anmelden.");
+        }
+        throw AuthError("Dafür ist eine Anmeldung nötig.");
+      }
+
       throw new Error("Datenbankfehler (" + res.status + ")" + (detail ? ": " + detail : ""));
     }
 
@@ -262,30 +313,34 @@
    * Anmeldung am Admin-Panel
    * ------------------------------------------------------------------ */
 
-  var PASS_KEY = "quizapp.localadmin";
-
-  var LocalAuth = {
-    mode: "passcode",
-    async login(passcode) {
-      var expected = CFG.localAdminPasscode || "admin";
-      if (passcode !== expected) throw new Error("Falsches Passwort.");
-      try { sessionStorage.setItem(PASS_KEY, "1"); } catch (e) { /* egal */ }
-      return true;
-    },
-    isLoggedIn() {
-      try { return sessionStorage.getItem(PASS_KEY) === "1"; } catch (e) { return false; }
-    },
-    logout() {
-      try { sessionStorage.removeItem(PASS_KEY); } catch (e) { /* egal */ }
-    }
+  /*
+   * Im localStorage-Modus gibt es keine Anmeldung.
+   *
+   * Das ist Absicht und kein Rückschritt: in diesem Modus existieren keine
+   * gemeinsamen Daten. Wer das Admin-Panel öffnet, sieht und ändert
+   * ausschließlich den Speicher des eigenen Browsers - es gibt für andere
+   * nichts einzusehen und nichts kaputtzumachen. Ein Passwort, das im
+   * ausgelieferten JavaScript steht, könnte ohnehin jeder auslesen; es würde
+   * nur Sicherheit vortäuschen, die es nicht gibt.
+   */
+  var OpenAuth = {
+    mode: "open",
+    required: false,
+    async login() { return true; },
+    isLoggedIn() { return true; },
+    async logout() { /* nichts anzumelden, nichts abzumelden */ }
   };
 
   var SupabaseAuth = {
     mode: "supabase",
+    required: true,
+
     async login(email, password) {
       if (!sbConfigOk()) {
         throw new Error("Supabase ist nicht konfiguriert – bitte url und anonKey in assets/js/config.js eintragen.");
       }
+      if (!email || !password) throw AuthError("Bitte E-Mail und Passwort eingeben.");
+
       var res = await fetch(
         CFG.supabase.url.replace(/\/+$/, "") + "/auth/v1/token?grant_type=password",
         {
@@ -297,26 +352,58 @@
           body: JSON.stringify({ email: email, password: password })
         }
       );
-      if (!res.ok) throw new Error("Anmeldung fehlgeschlagen – E-Mail oder Passwort stimmt nicht.");
+
+      if (!res.ok) {
+        // Bewusst ohne Unterscheidung, ob die E-Mail existiert - das würde
+        // sonst verraten, welche Konten es gibt.
+        throw AuthError("Anmeldung fehlgeschlagen – E-Mail oder Passwort stimmt nicht.");
+      }
+
       var data = await res.json();
-      if (!data.access_token) throw new Error("Anmeldung fehlgeschlagen.");
-      try { sessionStorage.setItem(TOKEN_KEY, data.access_token); } catch (e) { /* egal */ }
+      if (!data.access_token) throw AuthError("Anmeldung fehlgeschlagen.");
+
+      sessionExpired = false;
+      sbStoreToken(data.access_token, data.expires_in);
       return true;
     },
+
     isLoggedIn() {
       return !!sbToken();
     },
-    logout() {
-      try { sessionStorage.removeItem(TOKEN_KEY); } catch (e) { /* egal */ }
+
+    /* Meldet das Token auch serverseitig ab, damit es nicht weiterverwendbar
+       bleibt - und räumt lokal in jedem Fall auf. */
+    async logout() {
+      var token = sbToken();
+      sbClearToken();
+      if (!token || !sbConfigOk()) return;
+      try {
+        await fetch(CFG.supabase.url.replace(/\/+$/, "") + "/auth/v1/logout", {
+          method: "POST",
+          headers: {
+            apikey: CFG.supabase.anonKey,
+            Authorization: "Bearer " + token
+          }
+        });
+      } catch (e) { /* lokal ist das Token bereits weg */ }
     }
   };
 
+  /* Backend "supabase" ohne Zugangsdaten ist ein Konfigurationsfehler und kein
+     Laufzeitproblem – die Seiten sagen dann, was zu tun ist, statt in einen
+     unverständlichen Netzwerkfehler zu laufen. */
+  var configError = (MODE === "supabase" && !sbConfigOk())
+    ? "Der Datenbank-Modus ist aktiv, aber es fehlen die Zugangsdaten. " +
+      "Bitte url und anonKey in assets/js/config.js eintragen (siehe README.md)."
+    : null;
+
   var backend = MODE === "supabase" ? SupabaseBackend : LocalBackend;
-  var auth = MODE === "supabase" ? SupabaseAuth : LocalAuth;
+  var auth = MODE === "supabase" ? SupabaseAuth : OpenAuth;
 
   window.Store = Object.assign({}, backend, {
     mode: MODE,
     auth: auth,
-    uid: uid
+    uid: uid,
+    configError: configError
   });
 })();

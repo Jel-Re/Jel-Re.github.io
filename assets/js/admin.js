@@ -17,36 +17,60 @@
    * ------------------------------------------------------------------ */
 
   function setupLogin() {
-    var supabase = Store.auth.mode === "supabase";
-
-    el("field-email").classList.toggle("hidden", !supabase);
-    el("login-email").required = supabase;
-    el("login-hint").textContent = supabase
-      ? "Mit dem Supabase-Konto anmelden, das die Quizze verwalten darf."
-      : "Das Passwort steht in assets/js/config.js (localAdminPasscode).";
+    el("login-hint").textContent =
+      "Mit dem Supabase-Konto anmelden, das die Quizze verwalten darf. " +
+      "Das Passwort liegt in Supabase, nicht in dieser Website.";
 
     el("login-form").addEventListener("submit", async function (event) {
       event.preventDefault();
       var error = el("login-error");
+      var submit = el("login-form").querySelector("button[type=submit]");
+
       error.classList.add("hidden");
+      submit.disabled = true;
 
       try {
-        if (supabase) {
-          await Store.auth.login(el("login-email").value.trim(), el("login-password").value);
-        } else {
-          await Store.auth.login(el("login-password").value);
-        }
+        await Store.auth.login(el("login-email").value.trim(), el("login-password").value);
         el("login-password").value = "";
         openPanel();
       } catch (err) {
         error.textContent = err.message || String(err);
         error.classList.remove("hidden");
+      } finally {
+        submit.disabled = false;
       }
     });
   }
 
-  el("btn-logout").addEventListener("click", function () {
-    Store.auth.logout();
+  /* Zurück zum Login – nach Abmelden oder wenn die Sitzung abgelaufen ist. */
+  function showLogin(reason) {
+    el("panel").classList.add("hidden");
+    el("login").classList.remove("hidden");
+
+    var error = el("login-error");
+    if (reason) {
+      error.textContent = reason;
+      error.classList.remove("hidden");
+    } else {
+      error.classList.add("hidden");
+    }
+    el("login-password").value = "";
+    el("login-email").focus();
+  }
+
+  /* Ein abgelaufenes oder fehlendes Token führt zurück zum Login,
+     statt eine unverständliche Fehlermeldung anzuzeigen. */
+  function handleError(err, fallbackKind) {
+    if (err && err.isAuthError && Store.auth.required) {
+      showLogin(err.message);
+      return true;
+    }
+    message(err && err.message ? err.message : String(err), fallbackKind || "error");
+    return false;
+  }
+
+  el("btn-logout").addEventListener("click", async function () {
+    await Store.auth.logout();
     location.reload();
   });
 
@@ -69,9 +93,27 @@
   }
 
   async function openPanel() {
+    var supabase = Store.mode === "supabase";
+
     el("login").classList.add("hidden");
     el("panel").classList.remove("hidden");
-    el("mode-badge").textContent = Store.mode === "supabase" ? "Datenbank" : "Browser-Speicher";
+    el("mode-badge").textContent = supabase ? "Datenbank" : "Browser-Speicher";
+
+    // Abmelden gibt es nur, wo es auch eine Anmeldung gibt.
+    el("btn-logout").classList.toggle("hidden", !Store.auth.required);
+
+    var banner = el("mode-notice");
+    if (supabase) {
+      banner.classList.add("hidden");
+    } else {
+      banner.textContent =
+        "Lokaler Modus: Diese Quizze und Ergebnisse liegen nur in diesem Browser – " +
+        "andere Besucher sehen sie nicht. Deshalb gibt es hier auch keine Anmeldung: " +
+        "es sind keine gemeinsamen Daten vorhanden, die zu schützen wären. " +
+        "Für ein Quiz, das andere spielen sollen, den Supabase-Modus einrichten (siehe README).";
+      banner.classList.remove("hidden");
+    }
+
     await refresh();
   }
 
@@ -84,6 +126,10 @@
       renderResultsFilter();
       message("");
     } catch (err) {
+      if (err && err.isAuthError && Store.auth.required) {
+        showLogin(err.message);
+        return;
+      }
       message("Daten konnten nicht geladen werden: " + (err.message || String(err)), "error");
     }
   }
@@ -287,7 +333,7 @@
       try {
         await handler(event);
       } catch (err) {
-        message(err.message || String(err), "error");
+        handleError(err);
       } finally {
         b.disabled = false;
       }
@@ -486,6 +532,10 @@
       message(activate ? "Gespeichert und aktiviert." : "Quiz gespeichert.", "success");
       await refresh();
     } catch (err) {
+      if (err && err.isAuthError && Store.auth.required) {
+        showLogin(err.message);
+        return;
+      }
       error.textContent = err.message || String(err);
       error.classList.remove("hidden");
     }
@@ -529,6 +579,10 @@
     try {
       state.results = await Store.listResults(quizId);
     } catch (err) {
+      if (err && err.isAuthError && Store.auth.required) {
+        showLogin(err.message);
+        return;
+      }
       el("results-summary").textContent = "Ergebnisse konnten nicht geladen werden: " +
         (err.message || String(err));
       return;
@@ -620,7 +674,7 @@
       message("Ergebnisse gelöscht.", "success");
       await loadResults();
     } catch (err) {
-      message(err.message || String(err), "error");
+      handleError(err);
     }
   });
 
@@ -630,9 +684,15 @@
 
   setupLogin();
 
-  if (Store.auth.isLoggedIn()) {
+  if (Store.configError) {
+    // Ohne Zugangsdaten hat eine Anmeldemaske keinen Zweck.
+    el("login").classList.remove("hidden");
+    el("login-form").classList.add("hidden");
+    el("login-hint").textContent = Store.configError;
+  } else if (!Store.auth.required || Store.auth.isLoggedIn()) {
     openPanel();
   } else {
     el("login").classList.remove("hidden");
+    el("login-email").focus();
   }
 })();

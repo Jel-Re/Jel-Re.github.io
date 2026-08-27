@@ -1,11 +1,24 @@
 /*
  * Zentrale Konfiguration der Quiz-Website.
  *
- * backend: "local"    -> Daten liegen im Browser (localStorage). Kein Setup nötig,
- *                        aber jeder Browser sieht nur seine eigenen Daten.
- * backend: "supabase" -> Daten liegen in einer gemeinsamen Datenbank. Ein im
- *                        Admin-Panel aktiviertes Quiz ist damit für alle Besucher
- *                        sichtbar. Siehe supabase-schema.sql und README.md.
+ * Hier steht bewusst KEIN Passwort.
+ *
+ * Diese Seite besteht nur aus statischen Dateien – alles, was hier steht, wird
+ * an jeden Besucher ausgeliefert und ist im Browser lesbar. Ein Passwort in
+ * dieser Datei wäre deshalb kein Schutz, sondern nur eine Sichtblende.
+ * Echte Zugangskontrolle braucht einen Server, der die Anmeldung prüft –
+ * das übernimmt im Modus "supabase" die Supabase-Authentifizierung.
+ *
+ * backend: "local"    -> Daten liegen ausschließlich im Browser des Besuchers
+ *                        (localStorage). Kein Setup nötig. Es gibt hier keine
+ *                        gemeinsamen Daten und damit auch nichts abzusichern:
+ *                        jeder sieht und bearbeitet nur seinen eigenen Speicher.
+ *
+ * backend: "supabase" -> Daten liegen in einer gemeinsamen Datenbank. Das
+ *                        Admin-Panel verlangt eine echte Anmeldung, die
+ *                        Berechtigungen werden serverseitig durchgesetzt
+ *                        (Row Level Security). Siehe supabase-schema.sql
+ *                        und README.md.
  */
 window.QUIZ_CONFIG = {
   backend: "supabase",
@@ -14,11 +27,6 @@ window.QUIZ_CONFIG = {
     url: "",      // z. B. "https://abcdefghijkl.supabase.co"
     anonKey: ""   // der öffentliche "anon public" Key aus den Projekt-Einstellungen
   },
-
-  // Nur für backend: "local" – schützt das Admin-Panel oberflächlich.
-  // Das ist KEINE echte Sicherheit (der Code liegt im Browser). Für echten
-  // Schutz backend: "supabase" verwenden, dort wird per Supabase-Auth angemeldet.
-  localAdminPasscode: "admin",
 
   siteTitle: "Quiz"
 };
