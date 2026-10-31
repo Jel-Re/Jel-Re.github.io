@@ -141,7 +141,19 @@ function loadBan(){
   return BAN_DEFAULT.slice();
 }
 const norm = s => String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
-const isBanned = tx => S&&S.banned&&S.banned.some(w=>norm(w).trim()&&norm(tx).includes(norm(w).trim()));
+/* Ersetzt gesperrte Wörter (Groß/Klein und Akzente egal) durch "...". Läuft nur beim Host. */
+function censor(tx){
+  const chars=[...tx];let n="";const map=[];
+  chars.forEach((ch,i)=>{for(const c of norm(ch)){n+=c;map.push(i)}});
+  const hit=new Array(chars.length).fill(false);
+  H.banned.forEach(w=>{
+    const q=norm(w).trim();if(!q)return;
+    for(let at=n.indexOf(q);at!==-1;at=n.indexOf(q,at+1))for(let j=at;j<at+q.length;j++)hit[map[j]]=true;
+  });
+  let out="",run=false;
+  chars.forEach((ch,i)=>{if(hit[i]){if(!run)out+="...";run=true}else{out+=ch;run=false}});
+  return out;
+}
 const pick = a => a[Math.floor(Math.random()*a.length)];
 
 /* ---------- Helfer ---------- */
@@ -156,7 +168,7 @@ const genCode = () => {const a="ABCDEFGHJKLMNPQRSTUVWXYZ";let c="";for(let i=0;i
 
 /* ---------- Zustand ---------- */
 let role=null, peer=null, conn=null, conns={}, S=null, H=null;
-let note="", err="", status="", lost=false, mine=null, myName=ls.get("ex_name")||"";
+let err="", status="", lost=false, mine=null, myName=ls.get("ex_name")||"";
 const pname = id => (S.players.find(p=>p.id===id)||{name:"?"}).name;
 
 function cleanup(){
@@ -171,8 +183,8 @@ function hostRoom(name){
   const code=genCode();
   const p=new Peer("exposed-"+code,OPTS);peer=p;
   p.on("open",()=>{
-    S={code,hostPid:pid,phase:"lobby",players:[{id:pid,name,online:true}],mode:"gossip",cats:Object.keys(CATS),rounds:10,passes:1,pass:0,gen:0,banned:loadBan(),nsub:0,round:null,card:null,answered:[],reveal:null};
-    H={answers:{},pool:[],idx:0,timer:null,subs:{},cards:[],ci:0};
+    S={code,hostPid:pid,phase:"lobby",players:[{id:pid,name,online:true}],mode:"gossip",cats:Object.keys(CATS),rounds:10,passes:1,pass:0,gen:0,nsub:0,round:null,card:null,answered:[],reveal:null};
+    H={answers:{},pool:[],idx:0,timer:null,banned:loadBan(),subs:{},cards:[],ci:0};
     status="";bc();
   });
   p.on("connection",c=>{
@@ -238,10 +250,10 @@ function act(p,d){
     case "ban":{
       if(!host||S.phase!=="lobby")return;
       const w=String(d.w||"").trim().slice(0,30);
-      if(d.op==="add"&&w&&!S.banned.some(x=>norm(x)===norm(w))&&S.banned.length<50)S.banned.push(w);
-      else if(d.op==="del")S.banned=S.banned.filter(x=>x!==w);
+      if(d.op==="add"&&w&&!H.banned.some(x=>norm(x)===norm(w))&&H.banned.length<50)H.banned.push(w);
+      else if(d.op==="del")H.banned=H.banned.filter(x=>x!==w);
       else return;
-      ls.set("ex_ban",JSON.stringify(S.banned));bc();break}
+      ls.set("ex_ban",JSON.stringify(H.banned));bc();break}
     case "start":
       if(host&&S.phase==="lobby")startGame();break;
     case "ans":
@@ -253,9 +265,8 @@ function act(p,d){
       if(host&&S.phase==="reveal")nextRound();break;
     case "sub":{
       if(S.phase!=="write")return;
-      const k=d.kind,tx=clip(d.text);
+      const k=d.kind,tx=censor(clip(d.text));
       if(!["challenge","question","gossip"].includes(k)||d.target===p||!S.players.some(x=>x.id===d.target)||!tx)return;
-      if(isBanned(tx)){if(p===pid)banNote();else if(conns[p])try{conns[p].send({t:"rej",m:"Dieses Wort ist gesperrt."})}catch(e){}return}
       (H.subs[p]=H.subs[p]||{})[k]={target:d.target,text:tx};
       S.nsub=Object.values(H.subs).reduce((n,s)=>n+Object.keys(s).length,0);
       S.answered=Object.keys(H.subs).filter(id=>{const s=H.subs[id];return s.challenge&&s.question&&s.gossip});
@@ -279,7 +290,6 @@ function startGame(){
   nextRound();
 }
 /* Gossip Wheel: alle schreiben, dann werden die Karten nacheinander aufgedeckt */
-function banNote(){note="Dieses Wort ist gesperrt.";render(true)}
 function startWrite(){
   S.gen++;H.subs={};H.pending=false;S.answered=[];S.nsub=0;S.card=null;S.phase="write";bc();
 }
@@ -337,8 +347,7 @@ function joinRoom(code,name){
     c.on("open",()=>c.send({t:"hello",pid,name}));
     c.on("data",d=>{
       if(!d)return;
-      if(d.t==="rej"){note=d.m;draft.stage=Math.max(0,draft.stage-1);render(true)}
-      else if(d.t==="s"){clearTimeout(timer);S=d.s;status="";lost=false;render()}
+      if(d.t==="s"){clearTimeout(timer);S=d.s;status="";lost=false;render()}
       else if(d.t==="err"){clearTimeout(timer);fail(d.m)}
     });
     c.on("close",()=>{if(role==="client"&&conn===c){lost=true;render()}});
@@ -378,9 +387,9 @@ function vLobby(){
     <p class="mut" style="font-size:14px">${S.mode==="gossip"?"Alle schreiben gleichzeitig: erst eine Person wählen und ihr eine Challenge geben, dann eine Frage, dann ein Gerücht. Danach wird Karte für Karte aufgedeckt (ohne Absender), der Host drückt Weiter. Wer nicht ehrlich antwortet oder die Challenge nicht macht, trinkt.":"Alle wählen geheim, wer am ehesten zur Frage passt. Wer am häufigsten gewählt wird, trinkt."}</p>
     ${S.mode==="gossip"?`<h2 style="margin-top:6px">Durchgänge</h2><div class="seg">${[1,2,3].map(n=>`<button class="${S.passes===n?"on":""}" data-a="passes" data-v="${n}">${n}</button>`).join("")}</div>`:`<h2 style="margin-top:6px">Runden</h2><div class="seg">${[5,10,15,20,30].map(n=>`<button class="${S.rounds===n?"on":""}" data-a="rounds" data-v="${n}">${n}</button>`).join("")}</div>`}</div>
     <div class="card stack"><h2>Gesperrte Wörter</h2>
-      <div class="chips">${S.banned.map(w=>`<span class="chip">${esc(w)}<button data-a="unban" data-v="${esc(w)}" aria-label="Entfernen">✕</button></span>`).join("")||'<span class="mut" style="font-size:14px">Keine</span>'}</div>
+      <div class="chips">${H.banned.map(w=>`<span class="chip">${esc(w)}<button data-a="unban" data-v="${esc(w)}" aria-label="Entfernen">✕</button></span>`).join("")||'<span class="mut" style="font-size:14px">Keine</span>'}</div>
       <div class="row" style="align-items:stretch"><input type="text" id="bw" maxlength="30" placeholder="Wort sperren" autocomplete="off"><button class="btn sec" data-a="ban" style="width:96px;flex:none;padding:8px">Sperren</button></div>
-      <p class="mut" style="font-size:13px">Texte mit diesen Wörtern werden abgelehnt (Groß- und Kleinschreibung egal).</p></div>
+      <p class="mut" style="font-size:13px">Diese Wörter werden in allen Texten automatisch durch „...“ ersetzt (Groß- und Kleinschreibung egal). Nur du siehst die Liste.</p></div>
     <div class="card stack"><h2>Kategorien</h2>${Object.entries(CATS).map(([k,c])=>`<button class="opt ${S.cats.includes(k)?"on":""}" data-a="cat" data-v="${k}"><span>${esc(c.n)}<br><small>${esc(c.d)}</small></span><span>${S.cats.includes(k)?"✓":""}</span></button>`).join("")}
       <div class="row"><button class="btn sec" data-a="allcats">Alle</button><button class="btn sec" data-a="nocats">Keine</button></div></div>
     <button class="btn" data-a="start" ${on<3||!S.cats.length?"disabled":""}>Spiel starten</button>`;
@@ -415,7 +424,7 @@ function vWrite(){
     const a=2*Math.PI*i/n-Math.PI/2,nm=p.name.length>9?p.name.slice(0,8)+"…":p.name;
     return `<button class="av ${p.id===draft.target?"on":""}" data-a="pick" data-v="${esc(p.id)}" style="left:${(50+39*Math.cos(a)).toFixed(1)}%;top:${(50+39*Math.sin(a)).toFixed(1)}%"><i>${esc(p.name[0].toUpperCase())}</i><span>${esc(nm)}</span></button>`;
   }).join("");
-  const form=t?`<div class="card stack"><h2>${K.f} ${esc(t.name)}</h2>${note?`<div class="err">${esc(note)}</div>`:""}
+  const form=t?`<div class="card stack"><h2>${K.f} ${esc(t.name)}</h2>
     <textarea id="ft" maxlength="140" placeholder="${K.n} schreiben …">${esc(draft.text)}</textarea>
     <div class="row"><button class="btn sec" data-a="fill">Zufall</button><button class="btn" id="sb" data-a="sendsub" ${draft.text.trim()?"":"disabled"}>Senden</button></div></div>`
     :`<p class="c mut">Tippe auf eine Person.</p>`;
@@ -499,20 +508,14 @@ const A = {
   ban(){const i=document.getElementById("bw");if(!i)return;const w=i.value.trim();if(!w)return;send({t:"ban",op:"add",w});},
   unban(d){send({t:"ban",op:"del",w:d.v})},
   start(){send({t:"start"})},
-  pick(d){draft.target=d.v;note="";render(true)},
+  pick(d){draft.target=d.v;render(true)},
   fill(){
-    const K=KINDS[draft.stage],k=pick(S.cats),nm=draft.target?pname(draft.target):"";
-    let tx="";
-    for(let i=0;i<20;i++){
-      const k2=pick(S.cats);
-      tx=K.k==="challenge"?pick(CHAL[k2]):K.k==="question"?pick(QS[k2]):pick(RUM[k2]).replace("{n}",nm);
-      if(!isBanned(tx))break;
-    }
-    note="";draft.text=tx;render(true)},
+    const K=KINDS[draft.stage],nm=draft.target?pname(draft.target):"";
+    const k2=pick(S.cats);
+    const tx=K.k==="challenge"?pick(CHAL[k2]):K.k==="question"?pick(QS[k2]):pick(RUM[k2]).replace("{n}",nm);
+    draft.text=tx;render(true)},
   sendsub(){
     if(!draft.target||!draft.text.trim())return;
-    if(isBanned(draft.text)){banNote();return}
-    note="";
     send({t:"sub",kind:KINDS[draft.stage].k,target:draft.target,text:draft.text});
     draft.stage++;draft.target=null;draft.text="";render(true)},
   go(){send({t:"go"})},
