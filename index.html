@@ -1,73 +1,184 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Quiz</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9D%93%3C/text%3E%3C/svg%3E">
-<link rel="stylesheet" href="assets/css/style.css">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#14061f">
+<title>Exposed</title>
+<style>
+:root{--bg:#14061f;--card:#241038;--card2:#331752;--text:#fff;--mut:#b9a6d6;--acc:#ff3d81;--acc2:#ffb703;--ok:#2ee59d}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;background:radial-gradient(circle at 50% -10%,#3a0f63,var(--bg) 60%) fixed;color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+#app{max-width:520px;margin:0 auto;padding:20px 16px calc(24px + env(safe-area-inset-bottom));min-height:100vh;display:flex;flex-direction:column}
+h1{font-size:44px;margin:12px 0 4px;letter-spacing:-1px;text-align:center}
+h1 span{color:var(--acc)}
+h2{margin:8px 0 12px;font-size:22px}
+.sub{color:var(--mut);text-align:center;margin:0 0 20px}
+.card{background:var(--card);border-radius:18px;padding:16px;margin-bottom:14px}
+button{font:inherit;color:inherit;border:0;cursor:pointer}
+.btn{display:block;width:100%;padding:16px;border-radius:14px;background:var(--acc);font-weight:700;font-size:18px;margin-top:10px}
+.btn:disabled{opacity:.35}
+.btn.sec{background:var(--card2)}
+.row{display:flex;gap:8px}
+input[type=text]{flex:1;min-width:0;padding:14px;border-radius:12px;border:2px solid var(--card2);background:#1a0a2b;color:var(--text);font:inherit;font-size:17px}
+.add{width:54px;border-radius:12px;background:var(--acc2);color:#000;font-size:26px;font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{padding:9px 14px;border-radius:999px;background:var(--card2);font-size:15px}
+.chip.p b{margin-left:8px;color:var(--mut)}
+.cat{display:flex;align-items:center;gap:12px;width:100%;padding:12px;border-radius:14px;background:var(--card2);margin-bottom:8px;text-align:left;border:2px solid transparent}
+.cat.on{border-color:var(--acc)}
+.cat .e{font-size:26px}.cat small{display:block;color:var(--mut)}
+.cat .t{flex:1}.cat .k{width:24px;height:24px;border-radius:50%;border:2px solid var(--mut);display:grid;place-items:center;font-size:14px}
+.cat.on .k{background:var(--acc);border-color:var(--acc)}
+.big{flex:1;display:flex;flex-direction:column;justify-content:center;text-align:center;gap:14px}
+.tag{display:inline-block;align-self:center;padding:6px 14px;border-radius:999px;background:var(--card2);color:var(--acc2);font-weight:600}
+.q{font-size:28px;font-weight:800;line-height:1.25}
+.who{font-size:20px;color:var(--mut)}.who b{color:var(--acc2)}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.opt{padding:18px 8px;border-radius:14px;background:var(--card2);font-weight:700;font-size:18px;overflow-wrap:anywhere}
+.opt:active{background:var(--acc)}
+.bar{margin:8px 0;text-align:left}
+.bar .l{display:flex;justify-content:space-between;margin-bottom:4px}
+.bar .b{height:14px;border-radius:7px;background:var(--card2);overflow:hidden}
+.bar .b i{display:block;height:100%;background:var(--acc2);width:0;transition:width .8s ease}
+.bar.top .b i{background:var(--acc)}
+.exp{font-size:34px;font-weight:900;color:var(--acc);margin:6px 0}
+.prog{height:6px;background:var(--card2);border-radius:3px;overflow:hidden;margin-bottom:10px}
+.prog i{display:block;height:100%;background:var(--acc)}
+.sc{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--card2);font-size:18px}
+.sc:last-child{border:0}
+.top-b{display:flex;justify-content:space-between;align-items:center;color:var(--mut);font-size:14px}
+.top-b button{background:none;color:var(--mut);padding:4px}
+</style>
 </head>
 <body>
+<div id="app"></div>
+<script>
+const CATS = {
+  harmlos:{n:"Harmlos",e:"😇",d:"Locker zum Aufwärmen",q:[
+    "Wer würde am ehesten bei einem Film einschlafen?","Wer kommt am ehesten zu spät zu seiner eigenen Hochzeit?","Wer würde am ehesten ein Gratis-Eis mit allen teilen?","Wer verläuft sich am ehesten mit Google Maps?","Wer würde am ehesten ein Haustier mit ins Bett nehmen?","Wer hat das chaotischste Handy-Hintergrundbild?","Wer würde am ehesten bei einem Quiz die Antwort laut falsch rufen?","Wer isst am ehesten Pizza mit Ananas?","Wer vergisst am ehesten den Geburtstag eines Freundes?","Wer würde am ehesten ein Hobby anfangen und nach einer Woche aufgeben?","Wer schläft am ehesten bis Mittag?","Wer würde am ehesten Karaoke-Star werden?","Wer ist am ehesten der Mama-Freund der Gruppe?","Wer würde am ehesten in einem Escape Room panisch werden?"]},
+  freunde:{n:"Freunde",e:"🧑‍🤝‍🧑",d:"Wer ist hier was?",q:[
+    "Wer ist am ehesten der beste Freund in der Not?","Wer redet am meisten hinter dem Rücken der anderen?","Wer würde am ehesten ein Geheimnis ausplaudern?","Wer hat den schlechtesten Geschmack bei Männern/Frauen?","Wer würde am ehesten alle anderen für einen Promi-Flirt stehen lassen?","Wer schreibt am langsamsten zurück?","Wer ist am ehesten der Spielverderber?","Wer würde am ehesten Schulden bei Freunden vergessen?","Wer hat die peinlichsten Fotos von den anderen?","Wer würde am ehesten eine WhatsApp-Gruppe verlassen und alle beleidigen?","Wer wird am ehesten als Erstes heiraten?","Wer wäre im Zombie-Apokalypse-Team am nutzlosesten?","Wer lügt am überzeugendsten?","Wer ist am ehesten heimlich der Beliebteste der Gruppe?"]},
+  peinlich:{n:"Peinlich",e:"😳",d:"Rot werden garantiert",q:[
+    "Wer ist am ehesten schon mal mit offener Hose rumgelaufen?","Wer hat am ehesten schon mal den falschen Namen im Bett gesagt?","Wer hat am ehesten schon mal in die Schwimmhalle gepinkelt?","Wer hat die peinlichste Browser-Historie?","Wer würde am ehesten beim Sex lachen müssen?","Wer hat am ehesten schon mal jemanden aus Versehen geliked, den er stalkt?","Wer hat am ehesten schon mal einen Furz auf einem Date fallen lassen?","Wer hat die peinlichste Playlist?","Wer hat am ehesten schon mal die Chat-Nachricht an die falsche Person geschickt?","Wer hat am ehesten schon mal heimlich gesungen und wurde erwischt?","Wer weint am ehesten bei Werbespots?","Wer hat am ehesten schon mal einen Crush auf einen Lehrer gehabt?","Wer hat am ehesten schon mal im Club die falsche Person angebaggert?","Wer hat die peinlichste Kindheitsgeschichte?"]},
+  party:{n:"Party",e:"🍻",d:"Für den Abend",q:[
+    "Wer ist am ehesten der Erste, der betrunken ist?","Wer tanzt am schlechtesten und am selbstbewusstesten?","Wer würde am ehesten auf dem Tisch tanzen?","Wer vergisst am ehesten den ganzen Abend?","Wer würde am ehesten nachts um drei noch Döner bestellen?","Wer geht am ehesten ohne Verabschiedung?","Wer übernimmt am ehesten die DJ-Rolle und nervt alle?","Wer würde am ehesten ein Tattoo nach einer Wette stechen lassen?","Wer wacht am ehesten im falschen Bett auf?","Wer verliert am ehesten sein Handy auf einer Party?","Wer würde am ehesten Fremde auf der Party beim Namen nennen, obwohl er sie nicht kennt?","Wer ist am ehesten der Letzte, der die Party verlässt?","Wer würde am ehesten bei einer Mutprobe mitmachen?","Wer hat am ehesten schon mal in fremden Garten geschlafen?"]},
+  beziehung:{n:"Beziehung",e:"💘",d:"Liebe & Drama",q:[
+    "Wer ist am ehesten der Ex-Stalker der Gruppe?","Wer würde am ehesten eine Beziehung per Nachricht beenden?","Wer ist am ehesten heimlich verliebt?","Wer ist am eifersüchtigsten?","Wer würde am ehesten sein Ex-Date wieder treffen?","Wer flirtet am ehesten mit den Freunden vom Partner?","Wer würde am ehesten bei einem Streit zuerst nachgeben?","Wer ist am ehesten der schlechteste Dater?","Wer würde am ehesten ein Date für ein Gratis-Abendessen machen?","Wer hat am ehesten die meisten Ex-Partner?","Wer ist am ehesten ein Hopeless Romantic?","Wer würde am ehesten sein Passwort mit dem Partner teilen?","Wer würde am ehesten eine Fernbeziehung eingehen?","Wer ist am ehesten die Red Flag der Gruppe?"]},
+  spicy:{n:"Spicy",e:"🌶️",d:"Heiß und gewagt",q:[
+    "Wer hat am ehesten schon mal an einem öffentlichen Ort geknutscht?","Wer würde am ehesten für Geld ein heißes Foto posten?","Wer hat die meisten One-Night-Stands?","Wer würde am ehesten etwas Verrücktes im Bett ausprobieren?","Wer küsst am schlechtesten?","Wer würde am ehesten ein Nacktfoto verschicken?","Wer ist am ehesten schon mal beim Knutschen erwischt worden?","Wer flirtet am meisten beim Feiern?","Wer würde am ehesten mit einem Kollegen etwas anfangen?","Wer hat am ehesten schon mal eine Affäre gehabt?","Wer ist am ehesten im Bett am lautesten?","Wer hat am ehesten schon mal jemanden in der Gruppe heimlich attraktiv gefunden?","Wer würde am ehesten bei Strip-Poker gewinnen?","Wer hat am ehesten schon mal einen Kuss bereut?"]},
+  dirty:{n:"Dirty (18+)",e:"😈",d:"Nur für Mutige",q:[
+    "Wer von euch würde am ehesten mit einem Fremden nach Hause gehen?","Wer von euch hat die verrückteste Fantasie?","Wer würde am ehesten in einem Dreier ja sagen?","Wer hat am ehesten schon mal mit dem Ex geschlafen, obwohl es vorbei war?","Wer ist im Bett am dominantesten?","Wer hat am ehesten schon mal beim Sex jemand anderen im Kopf gehabt?","Wer würde am ehesten ein Sexvideo drehen?","Wer hat die meisten Dating-Apps installiert?","Wer ist am ehesten ein heimlicher Exhibitionist?","Wer würde am ehesten seinen Körper für Geld zeigen?","Wer hat am ehesten schon mal auf Arbeit geflirtet, um etwas zu bekommen?","Wer hat die schmutzigste Fantasie über jemanden in diesem Raum?","Wer würde am ehesten Sexspielzeug im Schrank verstecken?","Wer würde am ehesten ein Kondom vergessen?"]},
+  alltag:{n:"Alltag & Karriere",e:"💼",d:"Job, Geld, Leben",q:[
+    "Wer wird am ehesten Millionär?","Wer würde am ehesten den Chef anschreien und kündigen?","Wer ist am ehesten pleite am Monatsende?","Wer würde am ehesten im Lotto gewinnen und alles verprassen?","Wer hat am ehesten schon mal krankgemacht, obwohl er gesund war?","Wer würde am ehesten ein Start-up gründen und scheitern?","Wer ist am ehesten ein Workaholic?","Wer würde am ehesten auswandern?","Wer hat am ehesten schon mal ein Meeting verschlafen?","Wer würde am ehesten Influencer werden?","Wer kauft am ehesten Dinge, die er nie braucht?","Wer ist am ehesten ein schlechter Autofahrer?","Wer würde am ehesten eine Steuererklärung vergessen?","Wer schaut am meisten Netflix statt zu arbeiten?"]},
+  wild:{n:"Wild & Verrückt",e:"🤪",d:"Absurde Szenarien",q:[
+    "Wer würde am ehesten in einer Reality-Show landen?","Wer würde am ehesten ein Alien-Abduction überleben?","Wer würde am ehesten in einem Horrorfilm als Erstes sterben?","Wer würde am ehesten aus Versehen im Knast landen?","Wer würde am ehesten einen Marathon laufen, ohne zu trainieren?","Wer würde am ehesten ein Kind in einem fremden Supermarkt verlieren?","Wer würde am ehesten eine Wette gegen den Teufel eingehen?","Wer würde am ehesten ein Vermögen für ein NFT ausgeben?","Wer würde am ehesten Spinnen essen für 100 Euro?","Wer würde am ehesten ein Kommando gegen eine Bank leiten?","Wer würde am ehesten auf einem Festival verschwinden und 3 Tage später auftauchen?","Wer würde am ehesten mit einem Bären kämpfen?","Wer würde am ehesten sein Leben für ein Snickers riskieren?","Wer würde am ehesten Präsident werden?"]},
+  dunkel:{n:"Dunkle Geheimnisse",e:"🕯️",d:"Moralisch fragwürdig",q:[
+    "Wer hat am ehesten schon mal geklaut?","Wer hat am ehesten schon mal bei einer Prüfung betrogen?","Wer lügt am häufigsten ohne Grund?","Wer hat am ehesten schon mal jemandem das Herz gebrochen?","Wer würde am ehesten ein Geheimnis für Geld verraten?","Wer hat am ehesten schon mal einen Freund hintergangen?","Wer würde am ehesten einen Unfall verursachen und abhauen?","Wer hat am ehesten schon mal Social Media eines Ex gehackt?","Wer hat am ehesten schon mal was in einem Laden mitgehen lassen?","Wer würde am ehesten ein Erbe zurückhalten?","Wer hat am ehesten schon mal ein Date geghostet?","Wer ist am ehesten ein Gossip-Spion?","Wer würde am ehesten bei einem Streit lügen, um zu gewinnen?","Wer hat das größte schlechte Gewissen in diesem Raum?"]}
+};
 
-<div class="wrap">
+const S = {players:[],cats:Object.keys(CATS),rounds:15,
+  queue:[],idx:0,voter:0,votes:{},points:{},stage:"setup"};
+const $ = document.getElementById("app");
+const esc = s => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const save = () => { try{localStorage.setItem("exposed",JSON.stringify({players:S.players,cats:S.cats,rounds:S.rounds}))}catch(e){} };
+try{const d=JSON.parse(localStorage.getItem("exposed")||"null");if(d){S.players=(d.players||[]).filter(x=>typeof x==="string");if(Array.isArray(d.cats)&&d.cats.every(c=>c in CATS)&&d.cats.length)S.cats=d.cats;if(d.rounds)S.rounds=+d.rounds||15}}catch(e){}
 
-  <div id="loading" class="card center">
-    <p class="muted">Quiz wird geladen …</p>
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+function setup(){
+  S.stage="setup";
+  const ok = S.players.length>=3 && S.cats.length>0;
+  $.innerHTML = `
+  <h1>Ex<span>posed</span></h1>
+  <p class="sub">Wer von euch ist am ehesten …? Ein Handy, reihum abstimmen.</p>
+  <div class="card"><h2>Spieler (${S.players.length})</h2>
+    <form class="row" id="f"><input type="text" id="n" maxlength="16" placeholder="Name eingeben" autocomplete="off"><button class="add" aria-label="Hinzufügen">+</button></form>
+    <div class="chips">${S.players.map((p,i)=>`<span class="chip p">${esc(p)}<b data-r="${i}">✕</b></span>`).join("")||'<span class="sub" style="margin:0">Mindestens 3 Spieler</span>'}</div>
   </div>
-
-  <!-- Kein Quiz aktiv / Fehler -->
-  <div id="screen-empty" class="card center hidden">
-    <h1 id="empty-title">Gerade läuft kein Quiz</h1>
-    <p class="muted" id="empty-text">
-      Im Admin-Panel kann ein Quiz erstellt und aktiviert werden.
-      Danach startet es hier automatisch.
-    </p>
-    <p><a href="admin.html">Zum Admin-Panel</a></p>
+  <div class="card"><h2>Kategorien</h2>
+    ${Object.entries(CATS).map(([k,c])=>`<button class="cat ${S.cats.includes(k)?"on":""}" data-c="${k}"><span class="e">${c.e}</span><span class="t">${c.n}<small>${c.d}</small></span><span class="k">${S.cats.includes(k)?"✓":""}</span></button>`).join("")}
+    <div class="row"><button class="btn sec" id="all">Alle</button><button class="btn sec" id="none">Keine</button></div>
   </div>
-
-  <!-- Startbildschirm mit Namenseingabe -->
-  <div id="screen-start" class="card hidden">
-    <h1 id="start-title"></h1>
-    <p id="start-description" class="muted"></p>
-    <p class="muted" id="start-meta"></p>
-
-    <form id="start-form">
-      <div class="field">
-        <label for="player-name">Dein Name</label>
-        <input type="text" id="player-name" maxlength="60" autocomplete="name"
-               placeholder="z. B. Alex" required>
-      </div>
-      <p id="start-error" class="notice error hidden"></p>
-      <button type="submit" class="btn primary block">Quiz starten</button>
-    </form>
+  <div class="card"><h2>Runden: <span id="rv">${S.rounds}</span></h2>
+    <input type="range" id="rr" min="5" max="50" step="5" value="${S.rounds}" style="width:100%">
   </div>
+  <button class="btn" id="go" ${ok?"":"disabled"}>Spiel starten</button>`;
+  const f=$.querySelector("#f"),n=$.querySelector("#n");
+  f.onsubmit=e=>{e.preventDefault();const v=n.value.trim();if(!v)return;if(S.players.some(p=>p.toLowerCase()===v.toLowerCase())){n.value="";return}if(S.players.length>=12)return;S.players.push(v);save();setup();$.querySelector("#n").focus()};
+  $.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{S.players.splice(+b.dataset.r,1);save();setup()});
+  $.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{const k=b.dataset.c;S.cats=S.cats.includes(k)?S.cats.filter(x=>x!==k):[...S.cats,k];save();setup()});
+  $.querySelector("#all").onclick=()=>{S.cats=Object.keys(CATS);save();setup()};
+  $.querySelector("#none").onclick=()=>{S.cats=[];save();setup()};
+  $.querySelector("#rr").oninput=e=>{S.rounds=+e.target.value;$.querySelector("#rv").textContent=S.rounds;save()};
+  $.querySelector("#go").onclick=start;
+}
 
-  <!-- Laufendes Quiz -->
-  <div id="screen-play" class="card hidden">
-    <div class="progress"><span id="progress-bar" style="width:0%"></span></div>
-    <p class="muted" id="play-counter"></p>
-    <h2 id="play-question"></h2>
-    <div id="play-answers"></div>
-  </div>
+function start(){
+  let pool=[];
+  S.cats.forEach(k=>CATS[k].q.forEach(q=>pool.push({k,q})));
+  S.queue=shuffle(pool).slice(0,S.rounds);
+  S.idx=0;S.points={};S.players.forEach(p=>S.points[p]=0);
+  question();
+}
 
-  <!-- Ergebnis -->
-  <div id="screen-done" class="card hidden">
-    <h1>Geschafft!</h1>
-    <p id="done-greeting" class="muted"></p>
-    <p class="score-big" id="done-score"></p>
-    <p class="muted" id="done-percent"></p>
-    <p id="done-saved" class="muted"></p>
-    <h3 style="margin-top:1.5rem">Deine Antworten</h3>
-    <div id="done-review"></div>
-    <p style="margin-top:1.5rem">
-      <button type="button" class="btn" id="btn-restart">Noch einmal spielen</button>
-    </p>
-  </div>
+function hdr(){
+  return `<div class="top-b"><button id="quit">✕ Beenden</button><span>Runde ${S.idx+1}/${S.queue.length}</span></div>
+  <div class="prog"><i style="width:${S.idx/S.queue.length*100}%"></i></div>`;
+}
+function bindQuit(){const q=$.querySelector("#quit");if(q)q.onclick=()=>{if(confirm("Spiel wirklich beenden?"))setup()}}
 
-</div>
+function question(){
+  const r=S.queue[S.idx],c=CATS[r.k];
+  S.voter=0;S.votes={};
+  $.innerHTML=hdr()+`<div class="big"><span class="tag">${c.e} ${c.n}</span><div class="q">${esc(r.q)}</div></div>
+  <button class="btn" id="n">Abstimmen</button>`;
+  bindQuit();$.querySelector("#n").onclick=pass;
+}
 
-<script src="assets/js/config.js"></script>
-<script src="assets/js/db.js"></script>
-<script src="assets/js/quiz.js"></script>
+function pass(){
+  const v=S.players[S.voter];
+  $.innerHTML=hdr()+`<div class="big"><div class="who">Handy an</div><div class="exp">${esc(v)}</div><div class="who">Niemand anderes schauen!</div></div>
+  <button class="btn" id="n">Ich bin ${esc(v)}</button>`;
+  bindQuit();$.querySelector("#n").onclick=vote;
+}
+
+function vote(){
+  const v=S.players[S.voter],r=S.queue[S.idx];
+  const others=S.players.filter(p=>p!==v);
+  $.innerHTML=hdr()+`<div class="big"><div class="who"><b>${esc(v)}</b>, wähle:</div><div class="q" style="font-size:22px">${esc(r.q)}</div>
+  <div class="opts">${others.map((p,i)=>`<button class="opt" data-i="${i}">${esc(p)}</button>`).join("")}</div></div>`;
+  bindQuit();
+  $.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{
+    const t=others[+b.dataset.i];S.votes[t]=(S.votes[t]||0)+1;S.voter++;
+    S.voter<S.players.length?pass():reveal();
+  });
+}
+
+function reveal(){
+  const r=S.queue[S.idx];
+  const rows=S.players.map(p=>[p,S.votes[p]||0]).sort((a,b)=>b[1]-a[1]);
+  const max=rows[0][1];
+  const win=rows.filter(x=>x[1]===max).map(x=>x[0]);
+  win.forEach(p=>S.points[p]++);
+  $.innerHTML=hdr()+`<div class="big"><div class="q" style="font-size:20px;color:var(--mut)">${esc(r.q)}</div>
+  <div class="who">Exposed:</div><div class="exp">${win.map(esc).join(" & ")}</div>
+  <div>${rows.map(([p,c])=>`<div class="bar ${c===max?"top":""}"><div class="l"><span>${esc(p)}</span><span>${c}</span></div><div class="b"><i data-w="${c/Math.max(max,1)*100}"></i></div></div>`).join("")}</div></div>
+  <button class="btn" id="n">${S.idx+1<S.queue.length?"Nächste Frage":"Ergebnis"}</button>`;
+  bindQuit();
+  requestAnimationFrame(()=>requestAnimationFrame(()=>$.querySelectorAll("[data-w]").forEach(e=>e.style.width=e.dataset.w+"%")));
+  $.querySelector("#n").onclick=()=>{S.idx++;S.idx<S.queue.length?question():finish()};
+}
+
+function finish(){
+  const rows=S.players.map(p=>[p,S.points[p]]).sort((a,b)=>b[1]-a[1]);
+  $.innerHTML=`<h1>Ergebnis</h1><p class="sub">Am häufigsten exposed:</p>
+  <div class="card">${rows.map(([p,c],i)=>`<div class="sc"><span>${i===0?"🔥 ":""}${esc(p)}</span><b>${c}</b></div>`).join("")}</div>
+  <button class="btn" id="a">Nochmal spielen</button><button class="btn sec" id="s">Einstellungen</button>`;
+  $.querySelector("#a").onclick=start;$.querySelector("#s").onclick=setup;
+}
+
+setup();
+</script>
 </body>
 </html>
