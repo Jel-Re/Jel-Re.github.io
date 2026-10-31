@@ -3,56 +3,68 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#14061f">
+<meta name="color-scheme" content="light dark">
 <title>Exposed</title>
 <style>
-:root{--bg:#14061f;--card:#241038;--card2:#331752;--text:#fff;--mut:#b9a6d6;--acc:#ff3d81;--acc2:#ffb703;--ok:#2ee59d}
+:root{
+  --bg:#fafaf9;--surface:#fff;--soft:#f0f0ee;--line:#e2e2df;
+  --text:#171717;--mut:#737373;--ink:#171717;--ink-t:#fff;--ok:#171717;
+  --r:10px;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#111;--surface:#1a1a1a;--soft:#262626;--line:#303030;
+  --text:#f5f5f5;--mut:#9a9a9a;--ink:#f5f5f5;--ink-t:#111;--ok:#f5f5f5;
+}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;min-height:100%;background:radial-gradient(circle at 50% -10%,#3a0f63,var(--bg) 60%) fixed;color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-#app{max-width:520px;margin:0 auto;padding:20px 16px calc(24px + env(safe-area-inset-bottom));min-height:100vh;display:flex;flex-direction:column}
-h1{font-size:44px;margin:12px 0 4px;letter-spacing:-1px;text-align:center}
-h1 span{color:var(--acc)}
-h2{margin:8px 0 12px;font-size:22px}
-.sub{color:var(--mut);text-align:center;margin:0 0 20px}
-.card{background:var(--card);border-radius:18px;padding:16px;margin-bottom:14px}
-button{font:inherit;color:inherit;border:0;cursor:pointer}
-.btn{display:block;width:100%;padding:16px;border-radius:14px;background:var(--acc);font-weight:700;font-size:18px;margin-top:10px}
-.btn:disabled{opacity:.35}
-.btn.sec{background:var(--card2)}
-.row{display:flex;gap:8px}
-input[type=text]{flex:1;min-width:0;padding:14px;border-radius:12px;border:2px solid var(--card2);background:#1a0a2b;color:var(--text);font:inherit;font-size:17px}
-.add{width:54px;border-radius:12px;background:var(--acc2);color:#000;font-size:26px;font-weight:700}
-.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-.chip{padding:9px 14px;border-radius:999px;background:var(--card2);font-size:15px}
-.chip.p b{margin-left:8px;color:var(--mut)}
-.cat{display:flex;align-items:center;gap:12px;width:100%;padding:12px;border-radius:14px;background:var(--card2);margin-bottom:8px;text-align:left;border:2px solid transparent}
-.cat.on{border-color:var(--acc)}
-.cat .e{font-size:26px}.cat small{display:block;color:var(--mut)}
-.cat .t{flex:1}.cat .k{width:24px;height:24px;border-radius:50%;border:2px solid var(--mut);display:grid;place-items:center;font-size:14px}
-.cat.on .k{background:var(--acc);border-color:var(--acc)}
-.big{flex:1;display:flex;flex-direction:column;justify-content:center;text-align:center;gap:14px}
-.tag{display:inline-block;align-self:center;padding:6px 14px;border-radius:999px;background:var(--card2);color:var(--acc2);font-weight:600}
-.q{font-size:28px;font-weight:800;line-height:1.25}
-.who{font-size:20px;color:var(--mut)}.who b{color:var(--acc2)}
-.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
-.opt{padding:18px 8px;border-radius:14px;background:var(--card2);font-weight:700;font-size:18px;overflow-wrap:anywhere}
-.opt:active{background:var(--acc)}
-.bar{margin:8px 0;text-align:left}
-.bar .l{display:flex;justify-content:space-between;margin-bottom:4px}
-.bar .b{height:14px;border-radius:7px;background:var(--card2);overflow:hidden}
-.bar .b i{display:block;height:100%;background:var(--acc2);width:0;transition:width .8s ease}
-.bar.top .b i{background:var(--acc)}
-.exp{font-size:34px;font-weight:900;color:var(--acc);margin:6px 0}
-.prog{height:6px;background:var(--card2);border-radius:3px;overflow:hidden;margin-bottom:10px}
-.prog i{display:block;height:100%;background:var(--acc)}
-.sc{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--card2);font-size:18px}
-.sc:last-child{border:0}
-.top-b{display:flex;justify-content:space-between;align-items:center;color:var(--mut);font-size:14px}
-.top-b button{background:none;color:var(--mut);padding:4px}
+html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+#app{max-width:480px;margin:0 auto;padding:16px 16px calc(24px + env(safe-area-inset-bottom));min-height:100vh;display:flex;flex-direction:column;gap:14px}
+header{display:flex;justify-content:space-between;align-items:center;font-size:14px;color:var(--mut)}
+header b{color:var(--text);letter-spacing:.02em}
+h1{font-size:34px;line-height:1.1;margin:28px 0 4px;letter-spacing:-.02em}
+h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);margin:0 0 10px}
+p{margin:0}.mut{color:var(--mut)}.c{text-align:center}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+button{font:inherit;color:inherit;cursor:pointer}
+.btn{display:block;width:100%;padding:14px;border-radius:var(--r);border:1px solid var(--ink);background:var(--ink);color:var(--ink-t);font-weight:600}
+.btn.sec{background:transparent;color:var(--text);border-color:var(--line)}
+.btn:disabled{opacity:.35;cursor:default}
+.link{background:none;border:0;color:var(--mut);padding:4px;font-size:14px}
+input[type=text]{width:100%;padding:13px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);color:var(--text);font:inherit}
+input[type=text]:focus{outline:2px solid var(--ink);outline-offset:-1px}
+.stack{display:flex;flex-direction:column;gap:10px}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.seg{display:flex;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.seg button{flex:1;padding:10px 6px;background:transparent;border:0;border-right:1px solid var(--line);font-size:14px}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--ink);color:var(--ink-t)}
+.opt{display:flex;justify-content:space-between;align-items:center;width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);text-align:left}
+.opt.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.opt small{color:var(--mut)}
+.code{font-size:44px;font-weight:700;letter-spacing:.18em;text-align:center;font-variant-numeric:tabular-nums}
+.pl{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
+.pl:last-child{border:0}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--ink);margin-right:10px}
+.dot.off{background:transparent;border:1px solid var(--mut)}
+.q{font-size:24px;font-weight:650;line-height:1.3;letter-spacing:-.01em}
+.tag{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em}
+.prog{height:3px;background:var(--line);border-radius:2px;overflow:hidden}.prog i{display:block;height:100%;background:var(--ink)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.big{padding:20px 8px;font-weight:600;font-size:18px;text-align:center;justify-content:center}
+.bar{margin:10px 0}.bar .l{display:flex;justify-content:space-between;margin-bottom:4px}
+.bar .b{height:8px;background:var(--soft);border-radius:4px;overflow:hidden}.bar .b i{display:block;height:100%;background:var(--mut);width:0;transition:width .7s ease}
+.bar.top .b i{background:var(--ink)}.bar.top .l{font-weight:700}
+.wheelwrap{position:relative;width:var(--w);height:var(--w);margin:6px auto;--w:min(310px,82vw)}
+.wheelwrap canvas{width:100%;height:100%;display:block}
+.pointer{position:absolute;left:50%;top:-6px;width:0;height:0;margin-left:-10px;border:10px solid transparent;border-top:18px solid var(--ink);z-index:2}
+.hub{position:absolute;left:50%;top:50%;width:18px;height:18px;margin:-9px;border-radius:50%;background:var(--ink);z-index:2}
+.sc{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line)}.sc:last-child{border:0}
+.err{border:1px solid var(--ink);border-radius:var(--r);padding:12px;font-size:14px}
+.grow{flex:1}
 </style>
 </head>
 <body>
 <div id="app"></div>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script>
 const CATS = {
   harmlos:{n:"Harmlos",e:"😇",d:"Locker zum Aufwärmen",q:[
@@ -77,108 +89,364 @@ const CATS = {
     "Wer hat am ehesten schon mal geklaut?","Wer hat am ehesten schon mal bei einer Prüfung betrogen?","Wer lügt am häufigsten ohne Grund?","Wer hat am ehesten schon mal jemandem das Herz gebrochen?","Wer würde am ehesten ein Geheimnis für Geld verraten?","Wer hat am ehesten schon mal einen Freund hintergangen?","Wer würde am ehesten einen Unfall verursachen und abhauen?","Wer hat am ehesten schon mal Social Media eines Ex gehackt?","Wer hat am ehesten schon mal was in einem Laden mitgehen lassen?","Wer würde am ehesten ein Erbe zurückhalten?","Wer hat am ehesten schon mal ein Date geghostet?","Wer ist am ehesten ein Gossip-Spion?","Wer würde am ehesten bei einem Streit lügen, um zu gewinnen?","Wer hat das größte schlechte Gewissen in diesem Raum?"]}
 };
 
-const S = {players:[],cats:Object.keys(CATS),rounds:15,
-  queue:[],idx:0,voter:0,votes:{},points:{},stage:"setup"};
-const $ = document.getElementById("app");
+/* Gossip-Wheel: Ja/Nein-Fragen über die Person, auf der das Rad landet. */
+const GOSSIP = {
+harmlos:["Hat {n} schon mal im Kino geweint?","Hat {n} schon mal ein Geschenk weiterverschenkt?","Hat {n} schon mal laut im Auto gesungen und wurde dabei gesehen?","Hat {n} schon mal eine ganze Serienstaffel in einer Nacht geschaut?","Hat {n} schon mal einen Termin komplett verschlafen?","Hat {n} schon mal mit einem Haustier wie mit einem Menschen gesprochen?","Hat {n} schon mal absichtlich Nachrichten ungelesen gelassen?","Hat {n} schon mal einen ganzen Tag im Schlafanzug verbracht?"],
+freunde:["Hat {n} schon mal ein Geheimnis eines Freundes weitererzählt?","Hat {n} schon mal eine Einladung nur aus Höflichkeit angenommen?","Hat {n} schon mal einen Freund wegen eines Dates versetzt?","Hat {n} schon mal über jemanden aus dieser Runde gelästert?","Hat {n} schon mal eine Krankheit vorgetäuscht, um ein Treffen abzusagen?","Hat {n} schon mal einen Gruppenchat stummgeschaltet, um Ruhe zu haben?","Hat {n} schon mal ein Geschenk von Freunden heimlich nicht gemocht?","Hat {n} schon mal bei Freunden etwas kaputt gemacht und nichts gesagt?"],
+peinlich:["Hat {n} schon mal die falsche Person per Nachricht angeschrieben?","Hat {n} schon mal beim Flirten völlig versagt?","Hat {n} schon mal einen Fremden mit jemand anderem verwechselt?","Hat {n} schon mal bei einer Präsentation den Faden verloren?","Hat {n} schon mal aus Versehen „Ich dich auch“ gesagt?","Hat {n} schon mal eine Nachricht über jemanden direkt an diese Person geschickt?","Hat {n} schon mal in der Öffentlichkeit gestolpert und so getan, als wäre nichts?","Hat {n} schon mal beim Sport etwas Peinliches erlebt?"],
+party:["Hat {n} schon mal auf einer Party geschlafen?","Hat {n} schon mal den Heimweg nicht mehr gewusst?","Hat {n} schon mal einen Drink über jemanden gekippt?","Hat {n} schon mal vergessen, wie ein Abend endete?","Hat {n} schon mal bei einer Wette mitgemacht und es bereut?","Hat {n} schon mal einen Kater den ganzen Tag im Bett verbracht?","Hat {n} schon mal nachts etwas Absurdes zu essen bestellt?","Hat {n} schon mal auf einer Party jemanden angeflirtet und einen Korb bekommen?"],
+beziehung:["Hat {n} schon mal die Profile eines Ex angeschaut?","Hat {n} schon mal eine Beziehung per Nachricht beendet?","Hat {n} schon mal als Erste:r „Ich liebe dich“ gesagt?","Hat {n} schon mal auf einem Date gelogen?","Hat {n} schon mal einen Ex zurückgenommen?","Hat {n} schon mal heimlich das Handy des Partners durchsucht?","Hat {n} schon mal bei einem Date kaum zugehört?","Hat {n} schon mal einen Korb bekommen?"],
+spicy:["Hat {n} schon mal in der Öffentlichkeit geknutscht?","Hat {n} schon mal jemanden aus dieser Runde attraktiv gefunden?","Hat {n} schon mal nur aus Spaß geflirtet?","Hat {n} schon mal einen Kuss bereut?","Hat {n} schon mal mit jemandem geflirtet, der vergeben war?","Hat {n} schon mal ein Foto verschickt, das besser nicht verschickt worden wäre?","Hat {n} schon mal einen One-Night-Stand gehabt?","Hat {n} schon mal bei einem Trinkspiel Kleidung ausgezogen?"],
+dirty:["Hat {n} schon mal mit jemandem aus dem Freundeskreis geschlafen?","Hat {n} schon mal im Auto Sex gehabt?","Hat {n} schon mal an einem öffentlichen Ort Sex gehabt?","Hat {n} schon mal heimlich Dating-Apps benutzt, obwohl vergeben?","Hat {n} schon mal Spielzeug im Bett benutzt?","Hat {n} schon mal beim Sex den falschen Namen gesagt?","Hat {n} schon mal über einen Dreier nachgedacht?","Hat {n} schon mal von jemandem aus dieser Runde geträumt, und zwar nicht jugendfrei?"],
+alltag:["Hat {n} schon mal krankgemacht, ohne krank zu sein?","Hat {n} schon mal in einer Bewerbung geflunkert?","Hat {n} schon mal einen Kassenfehler zu den eigenen Gunsten nicht gemeldet?","Hat {n} schon mal das Konto überzogen?","Hat {n} schon mal etwas Teures gekauft und sofort bereut?","Hat {n} schon mal im Meeting fast geschlafen?","Hat {n} schon mal den Chef heimlich nachgemacht?","Hat {n} schon mal ernsthaft über eine Kündigung nachgedacht?"],
+wild:["Hat {n} schon mal einen Promi getroffen und sich blamiert?","Hat {n} schon mal etwas Verrücktes für eine Wette getan?","Hat {n} schon mal spontan eine Reise gebucht?","Hat {n} schon mal ein Tattoo oder Piercing spontan stechen lassen?","Hat {n} schon mal bei einer Mutprobe mitgemacht?","Hat {n} schon mal im Ausland die Polizei gebraucht?","Hat {n} schon mal unter falschem Namen etwas bestellt?","Hat {n} schon mal aus Trotz einen ganzen Tag geschwiegen?"],
+dunkel:["Hat {n} schon mal etwas mitgehen lassen?","Hat {n} schon mal bei einer Prüfung gespickt?","Hat {n} schon mal jemanden absichtlich geghostet?","Hat {n} schon mal jemanden angelogen, nur um sich zu schützen?","Hat {n} schon mal einen Freund hintergangen?","Hat {n} schon mal einen Fund behalten, statt ihn abzugeben?","Hat {n} schon mal Rache geplant?","Hat {n} schon mal ein versprochenes Geheimnis verraten?"]
+};
+const MODES = {gossip:"Gossip Wheel", likely:"Wer am ehesten", mix:"Mix"};
+
+/* ---------- Helfer ---------- */
+const $app = document.getElementById("app");
 const esc = s => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const save = () => { try{localStorage.setItem("exposed",JSON.stringify({players:S.players,cats:S.cats,rounds:S.rounds}))}catch(e){} };
-try{const d=JSON.parse(localStorage.getItem("exposed")||"null");if(d){S.players=(d.players||[]).filter(x=>typeof x==="string");if(Array.isArray(d.cats)&&d.cats.every(c=>c in CATS)&&d.cats.length)S.cats=d.cats;if(d.rounds)S.rounds=+d.rounds||15}}catch(e){}
+const shuffle = a => {a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const ss = {get(k){try{return sessionStorage.getItem(k)}catch(e){return null}},set(k,v){try{sessionStorage.setItem(k,v)}catch(e){}},del(k){try{sessionStorage.removeItem(k)}catch(e){}}};
+const ls = {get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+let pid = ss.get("ex_pid"); if(!pid){pid=Math.random().toString(36).slice(2,12);ss.set("ex_pid",pid)}
+const OPTS = window.__PEER_OPTS || {};
+const genCode = () => {const a="ABCDEFGHJKLMNPQRSTUVWXYZ";let c="";for(let i=0;i<4;i++)c+=a[Math.floor(Math.random()*a.length)];return c};
 
-function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+/* ---------- Zustand ---------- */
+let role=null, peer=null, conn=null, conns={}, S=null, H=null;
+let err="", status="", lost=false, mine=null, spunKey=null, myName=ls.get("ex_name")||"";
+const pname = id => (S.players.find(p=>p.id===id)||{name:"?"}).name;
 
-function setup(){
-  S.stage="setup";
-  const ok = S.players.length>=3 && S.cats.length>0;
-  $.innerHTML = `
-  <h1>Ex<span>posed</span></h1>
-  <p class="sub">Wer von euch ist am ehesten …? Ein Handy, reihum abstimmen.</p>
-  <div class="card"><h2>Spieler (${S.players.length})</h2>
-    <form class="row" id="f"><input type="text" id="n" maxlength="16" placeholder="Name eingeben" autocomplete="off"><button class="add" aria-label="Hinzufügen">+</button></form>
-    <div class="chips">${S.players.map((p,i)=>`<span class="chip p">${esc(p)}<b data-r="${i}">✕</b></span>`).join("")||'<span class="sub" style="margin:0">Mindestens 3 Spieler</span>'}</div>
-  </div>
-  <div class="card"><h2>Kategorien</h2>
-    ${Object.entries(CATS).map(([k,c])=>`<button class="cat ${S.cats.includes(k)?"on":""}" data-c="${k}"><span class="e">${c.e}</span><span class="t">${c.n}<small>${c.d}</small></span><span class="k">${S.cats.includes(k)?"✓":""}</span></button>`).join("")}
-    <div class="row"><button class="btn sec" id="all">Alle</button><button class="btn sec" id="none">Keine</button></div>
-  </div>
-  <div class="card"><h2>Runden: <span id="rv">${S.rounds}</span></h2>
-    <input type="range" id="rr" min="5" max="50" step="5" value="${S.rounds}" style="width:100%">
-  </div>
-  <button class="btn" id="go" ${ok?"":"disabled"}>Spiel starten</button>`;
-  const f=$.querySelector("#f"),n=$.querySelector("#n");
-  f.onsubmit=e=>{e.preventDefault();const v=n.value.trim();if(!v)return;if(S.players.some(p=>p.toLowerCase()===v.toLowerCase())){n.value="";return}if(S.players.length>=12)return;S.players.push(v);save();setup();$.querySelector("#n").focus()};
-  $.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{S.players.splice(+b.dataset.r,1);save();setup()});
-  $.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{const k=b.dataset.c;S.cats=S.cats.includes(k)?S.cats.filter(x=>x!==k):[...S.cats,k];save();setup()});
-  $.querySelector("#all").onclick=()=>{S.cats=Object.keys(CATS);save();setup()};
-  $.querySelector("#none").onclick=()=>{S.cats=[];save();setup()};
-  $.querySelector("#rr").oninput=e=>{S.rounds=+e.target.value;$.querySelector("#rv").textContent=S.rounds;save()};
-  $.querySelector("#go").onclick=start;
+function cleanup(){
+  try{peer&&peer.destroy()}catch(e){}
+  peer=null;conn=null;conns={};S=null;H=null;role=null;lost=false;mine=null;status="";ss.del("ex_room");
 }
+function fail(m){cleanup();err=m;render()}
 
-function start(){
-  let pool=[];
-  S.cats.forEach(k=>CATS[k].q.forEach(q=>pool.push({k,q})));
-  S.queue=shuffle(pool).slice(0,S.rounds);
-  S.idx=0;S.points={};S.players.forEach(p=>S.points[p]=0);
-  question();
-}
-
-function hdr(){
-  return `<div class="top-b"><button id="quit">✕ Beenden</button><span>Runde ${S.idx+1}/${S.queue.length}</span></div>
-  <div class="prog"><i style="width:${S.idx/S.queue.length*100}%"></i></div>`;
-}
-function bindQuit(){const q=$.querySelector("#quit");if(q)q.onclick=()=>{if(confirm("Spiel wirklich beenden?"))setup()}}
-
-function question(){
-  const r=S.queue[S.idx],c=CATS[r.k];
-  S.voter=0;S.votes={};
-  $.innerHTML=hdr()+`<div class="big"><span class="tag">${c.e} ${c.n}</span><div class="q">${esc(r.q)}</div></div>
-  <button class="btn" id="n">Abstimmen</button>`;
-  bindQuit();$.querySelector("#n").onclick=pass;
-}
-
-function pass(){
-  const v=S.players[S.voter];
-  $.innerHTML=hdr()+`<div class="big"><div class="who">Handy an</div><div class="exp">${esc(v)}</div><div class="who">Niemand anderes schauen!</div></div>
-  <button class="btn" id="n">Ich bin ${esc(v)}</button>`;
-  bindQuit();$.querySelector("#n").onclick=vote;
-}
-
-function vote(){
-  const v=S.players[S.voter],r=S.queue[S.idx];
-  const others=S.players.filter(p=>p!==v);
-  $.innerHTML=hdr()+`<div class="big"><div class="who"><b>${esc(v)}</b>, wähle:</div><div class="q" style="font-size:22px">${esc(r.q)}</div>
-  <div class="opts">${others.map((p,i)=>`<button class="opt" data-i="${i}">${esc(p)}</button>`).join("")}</div></div>`;
-  bindQuit();
-  $.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{
-    const t=others[+b.dataset.i];S.votes[t]=(S.votes[t]||0)+1;S.voter++;
-    S.voter<S.players.length?pass():reveal();
+/* ---------- Host (hält den Spielstand) ---------- */
+function hostRoom(name){
+  role="host";status="Raum wird erstellt …";err="";render();
+  const code=genCode();
+  const p=new Peer("exposed-"+code,OPTS);peer=p;
+  p.on("open",()=>{
+    S={code,hostPid:pid,phase:"lobby",players:[{id:pid,name,online:true,score:0}],mode:"gossip",cats:Object.keys(CATS),rounds:10,round:null,answered:[],reveal:null};
+    H={answers:{},pool:[],bag:[],idx:0,timer:null};
+    status="";bc();
+  });
+  p.on("connection",c=>{
+    c.on("data",d=>onHost(c,d));
+    c.on("close",()=>drop(c));
+    c.on("error",()=>drop(c));
+  });
+  p.on("disconnected",()=>{try{p.reconnect()}catch(e){}});
+  p.on("error",e=>{
+    if(e.type==="unavailable-id"){try{p.destroy()}catch(x){}hostRoom(name)}
+    else if(e.type!=="peer-unavailable") fail("Verbindungsfehler ("+e.type+")");
   });
 }
-
-function reveal(){
-  const r=S.queue[S.idx];
-  const rows=S.players.map(p=>[p,S.votes[p]||0]).sort((a,b)=>b[1]-a[1]);
-  const max=rows[0][1];
-  const win=rows.filter(x=>x[1]===max).map(x=>x[0]);
-  win.forEach(p=>S.points[p]++);
-  $.innerHTML=hdr()+`<div class="big"><div class="q" style="font-size:20px;color:var(--mut)">${esc(r.q)}</div>
-  <div class="who">Exposed:</div><div class="exp">${win.map(esc).join(" & ")}</div>
-  <div>${rows.map(([p,c])=>`<div class="bar ${c===max?"top":""}"><div class="l"><span>${esc(p)}</span><span>${c}</span></div><div class="b"><i data-w="${c/Math.max(max,1)*100}"></i></div></div>`).join("")}</div></div>
-  <button class="btn" id="n">${S.idx+1<S.queue.length?"Nächste Frage":"Ergebnis"}</button>`;
-  bindQuit();
-  requestAnimationFrame(()=>requestAnimationFrame(()=>$.querySelectorAll("[data-w]").forEach(e=>e.style.width=e.dataset.w+"%")));
-  $.querySelector("#n").onclick=()=>{S.idx++;S.idx<S.queue.length?question():finish()};
+function bc(){
+  if(role==="host") for(const id in conns){try{conns[id].send({t:"s",s:S})}catch(e){}}
+  render();
+}
+function onHost(c,d){
+  if(!d||typeof d!=="object")return;
+  if(d.t==="hello"){return join(c,d)}
+  if(c._pid) act(c._pid,d);
+}
+function join(c,d){
+  const name=String(d.name||"").trim().slice(0,16),id=String(d.pid||"").slice(0,20);
+  if(!name||!id||!S)return;
+  let pl=S.players.find(x=>x.id===id);
+  if(!pl){
+    if(S.phase!=="lobby"){c.send({t:"err",m:"Das Spiel läuft schon. Warte auf die nächste Runde."});return}
+    if(S.players.length>=12){c.send({t:"err",m:"Der Raum ist voll (12 Spieler)."});return}
+    if(S.players.some(x=>x.name.toLowerCase()===name.toLowerCase())){c.send({t:"err",m:"Dieser Name ist im Raum schon vergeben."});return}
+    pl={id,name,online:true,score:0};S.players.push(pl);
+  }
+  if(conns[id]&&conns[id]!==c){try{conns[id]._pid=null;conns[id].close()}catch(e){}}
+  pl.online=true;c._pid=id;conns[id]=c;bc();
+}
+function drop(c){
+  const id=c._pid;if(!id||conns[id]!==c||!S)return;
+  delete conns[id];
+  if(S.phase==="lobby") S.players=S.players.filter(p=>p.id!==id);
+  else {const pl=S.players.find(p=>p.id===id);if(pl)pl.online=false;}
+  checkAll();bc();
+}
+const required = () => S.players.filter(p=>p.online).map(p=>p.id);
+function checkAll(){
+  if(S.phase!=="answer"||H.pending)return;
+  if(required().every(id=>id in H.answers)){
+    H.pending=true;const idx=S.round.idx;
+    setTimeout(()=>{H.pending=false;if(S.phase==="answer"&&S.round.idx===idx)doReveal()},700);
+  }
+}
+function act(p,d){
+  if(!S||!S.players.some(x=>x.id===p))return;
+  const host=p===S.hostPid;
+  switch(d.t){
+    case "set":
+      if(!host||S.phase!=="lobby")return;
+      if(d.mode in MODES)S.mode=d.mode;
+      if(Array.isArray(d.cats)){const c=d.cats.filter(k=>k in CATS);S.cats=c}
+      if([5,10,15,20,30].includes(d.rounds))S.rounds=d.rounds;
+      bc();break;
+    case "start":
+      if(host&&S.phase==="lobby")startGame();break;
+    case "ans":
+      if(S.phase!=="answer")return;
+      if(S.round.type==="gossip"){if(d.v!=="ja"&&d.v!=="nein")return}
+      else if(!(S.players.some(x=>x.id===d.v)&&d.v!==p))return;
+      H.answers[p]=d.v;S.answered=Object.keys(H.answers);checkAll();bc();break;
+    case "reveal":
+      if(host&&S.phase==="answer")doReveal();break;
+    case "next":
+      if(host&&S.phase==="reveal")nextRound();break;
+    case "again":
+      if(host&&S.phase==="end"){S.phase="lobby";S.round=null;S.reveal=null;S.answered=[];S.players=S.players.filter(x=>x.online);S.players.forEach(x=>x.score=0);bc()}break;
+  }
+}
+function startGame(){
+  const on=S.players.filter(p=>p.online);
+  if(on.length<3||!S.cats.length)return;
+  S.players=on;S.players.forEach(p=>p.score=0);
+  const pool=[];
+  S.cats.forEach(k=>{
+    if(S.mode!=="likely")GOSSIP[k].forEach(q=>pool.push({type:"gossip",cat:k,text:q}));
+    if(S.mode!=="gossip")CATS[k].q.forEach(q=>pool.push({type:"likely",cat:k,text:q}));
+  });
+  H.pool=shuffle(pool).slice(0,S.rounds);H.idx=-1;H.bag=[];
+  S.total=H.pool.length;
+  nextRound();
+}
+function nextRound(){
+  clearTimeout(H.timer);
+  H.idx++;H.answers={};H.pending=false;S.answered=[];S.reveal=null;
+  if(H.idx>=H.pool.length){S.phase="end";S.round=null;return bc()}
+  const it=H.pool[H.idx];
+  const round={idx:H.idx,type:it.type,cat:it.cat,text:it.text,target:null};
+  if(it.type==="gossip"){
+    const wheel=S.players.filter(p=>p.online);
+    if(!H.bag.length)H.bag=shuffle(wheel.map(p=>p.id));
+    let tid=H.bag.pop();if(!wheel.some(p=>p.id===tid))tid=wheel[Math.floor(Math.random()*wheel.length)].id;
+    round.target=tid;round.wheel=wheel.map(p=>({id:p.id,name:p.name}));
+    round.spin=wheel.findIndex(p=>p.id===tid);
+    round.text=it.text.replace("{n}",pname(tid));
+    S.round=round;S.phase="spin";
+    const idx=H.idx;
+    H.timer=setTimeout(()=>{if(S.phase==="spin"&&S.round.idx===idx){S.phase="answer";bc()}},4800);
+  } else {S.round=round;S.phase="answer"}
+  bc();
+}
+function score(id,n){const p=S.players.find(x=>x.id===id);if(p)p.score+=n}
+function doReveal(){
+  const r=S.round,ans=H.answers;let rev;
+  if(r.type==="gossip"){
+    const truth=ans[r.target]||null,guesses={},right=[];
+    S.players.forEach(p=>{if(p.id!==r.target&&ans[p.id])guesses[p.id]=ans[p.id]});
+    if(truth){
+      Object.keys(guesses).forEach(id=>{if(guesses[id]===truth)right.push(id)});
+      right.forEach(id=>score(id,1));
+      score(r.target,Object.keys(guesses).length-right.length);
+    }
+    rev={truth,guesses,right};
+  } else {
+    const counts={};
+    Object.values(ans).forEach(v=>{if(S.players.some(x=>x.id===v))counts[v]=(counts[v]||0)+1});
+    const max=Math.max(0,...Object.values(counts));
+    const winners=max?Object.keys(counts).filter(k=>counts[k]===max):[];
+    winners.forEach(id=>score(id,1));
+    rev={counts,winners};
+  }
+  S.reveal=rev;S.phase="reveal";bc();
 }
 
-function finish(){
-  const rows=S.players.map(p=>[p,S.points[p]]).sort((a,b)=>b[1]-a[1]);
-  $.innerHTML=`<h1>Ergebnis</h1><p class="sub">Am häufigsten exposed:</p>
-  <div class="card">${rows.map(([p,c],i)=>`<div class="sc"><span>${i===0?"🔥 ":""}${esc(p)}</span><b>${c}</b></div>`).join("")}</div>
-  <button class="btn" id="a">Nochmal spielen</button><button class="btn sec" id="s">Einstellungen</button>`;
-  $.querySelector("#a").onclick=start;$.querySelector("#s").onclick=setup;
+/* ---------- Client ---------- */
+function joinRoom(code,name){
+  role="client";status="Verbinde …";err="";lost=false;render();
+  ss.set("ex_room",JSON.stringify({code,name}));
+  const p=new Peer(OPTS);peer=p;
+  const timer=setTimeout(()=>{if(!S&&peer===p)fail("Raum nicht erreichbar. Code prüfen und erneut versuchen.")},15000);
+  p.on("open",()=>{
+    const c=p.connect("exposed-"+code,{reliable:true});conn=c;
+    c.on("open",()=>c.send({t:"hello",pid,name}));
+    c.on("data",d=>{
+      if(!d)return;
+      if(d.t==="s"){clearTimeout(timer);S=d.s;status="";lost=false;render()}
+      else if(d.t==="err"){clearTimeout(timer);fail(d.m)}
+    });
+    c.on("close",()=>{if(role==="client"&&conn===c){lost=true;render()}});
+  });
+  p.on("error",e=>{clearTimeout(timer);if(peer===p)fail(e.type==="peer-unavailable"?"Raum nicht gefunden. Code prüfen.":"Verbindungsfehler ("+e.type+")")});
+}
+function send(m){
+  if(role==="host")act(pid,m);
+  else if(conn&&conn.open)conn.send(m);
 }
 
-setup();
+/* ---------- Ansichten ---------- */
+const me = () => S&&S.players.find(p=>p.id===pid);
+const isHost = () => S&&S.hostPid===pid;
+function header(){
+  return `<header><b>EXPOSED</b><span>${S?`Raum ${esc(S.code)} · `:""}<button class="link" data-a="leave">Verlassen</button></span></header>`;
+}
+function board(){
+  const rows=S.players.slice().sort((a,b)=>b.score-a.score);
+  return rows.map(p=>`<div class="sc"><span>${esc(p.name)}${p.id===pid?" (du)":""}</span><b>${p.score}</b></div>`).join("");
+}
+function vHome(){
+  const q=new URLSearchParams(location.search).get("r")||"";
+  return `<h1>Exposed</h1><p class="mut">Gossip-Partyspiel für die Gruppe. Jeder spielt auf dem eigenen Handy.</p>
+  ${err?`<div class="err">${esc(err)}</div>`:""}
+  <div class="card stack"><input type="text" id="nm" maxlength="16" placeholder="Dein Name" value="${esc(myName)}" autocomplete="off">
+    <button class="btn" data-a="create">Raum erstellen</button></div>
+  <div class="card stack"><h2>Raum beitreten</h2>
+    <input type="text" id="cd" maxlength="4" placeholder="Code" value="${esc(q.toUpperCase().slice(0,4))}" autocapitalize="characters" autocomplete="off" style="text-transform:uppercase;letter-spacing:.2em">
+    <button class="btn sec" data-a="join">Beitreten</button></div>`;
+}
+function vLobby(){
+  const h=isHost(),on=S.players.filter(p=>p.online).length;
+  const link=location.origin+location.pathname+"?r="+S.code;
+  let h2=`${header()}<div class="card"><p class="mut c" style="font-size:13px">Raum-Code</p><div class="code">${esc(S.code)}</div>
+    <div class="row" style="margin-top:12px"><button class="btn sec" data-a="share">Link teilen</button></div></div>
+  <div class="card"><h2>Spieler (${S.players.length})</h2>${S.players.map(p=>`<div class="pl"><span><span class="dot ${p.online?"":"off"}"></span>${esc(p.name)}${p.id===S.hostPid?' <span class="mut">· Host</span>':""}</span></div>`).join("")}
+    ${on<3?`<p class="mut" style="margin-top:10px;font-size:14px">Mindestens 3 Spieler nötig.</p>`:""}</div>`;
+  if(h){
+    h2+=`<div class="card stack"><h2>Modus</h2><div class="seg">${Object.entries(MODES).map(([k,n])=>`<button class="${S.mode===k?"on":""}" data-a="mode" data-v="${k}">${n}</button>`).join("")}</div>
+    <h2 style="margin-top:6px">Runden</h2><div class="seg">${[5,10,15,20,30].map(n=>`<button class="${S.rounds===n?"on":""}" data-a="rounds" data-v="${n}">${n}</button>`).join("")}</div></div>
+    <div class="card stack"><h2>Kategorien</h2>${Object.entries(CATS).map(([k,c])=>`<button class="opt ${S.cats.includes(k)?"on":""}" data-a="cat" data-v="${k}"><span>${esc(c.n)}<br><small>${esc(c.d)}</small></span><span>${S.cats.includes(k)?"✓":""}</span></button>`).join("")}
+      <div class="row"><button class="btn sec" data-a="allcats">Alle</button><button class="btn sec" data-a="nocats">Keine</button></div></div>
+    <button class="btn" data-a="start" ${on<3||!S.cats.length?"disabled":""}>Spiel starten</button>`;
+  } else {
+    h2+=`<div class="card"><h2>Einstellungen</h2><p>${esc(MODES[S.mode])} · ${S.rounds} Runden</p><p class="mut" style="font-size:14px;margin-top:4px">${S.cats.map(k=>esc(CATS[k].n)).join(", ")||"Keine Kategorie"}</p></div>
+    <p class="mut c">Warte, bis ${esc(pname(S.hostPid))} das Spiel startet …</p>`;
+  }
+  return h2;
+}
+function rhead(){
+  const r=S.round;
+  return `${header()}<div class="prog"><i style="width:${r.idx/S.total*100}%"></i></div>
+  <div class="tag">Runde ${r.idx+1} / ${S.total} · ${esc(CATS[r.cat].n)} · ${r.type==="gossip"?"Gossip Wheel":"Wer am ehesten"}</div>`;
+}
+function vSpin(){
+  return `${rhead()}<div class="grow stack" style="justify-content:center"><p class="c mut">Das Rad entscheidet …</p>
+  <div class="wheelwrap"><div class="pointer"></div><div class="hub"></div><canvas id="wheel" width="620" height="620"></canvas></div></div>`;
+}
+function vAnswer(){
+  const r=S.round,need=required().length,got=S.answered.filter(id=>required().includes(id)).length;
+  const done=S.answered.includes(pid);
+  let body;
+  if(r.type==="gossip"){
+    const t=r.target===pid;
+    body=`<p class="tag">${t?"Es geht um dich – antworte ehrlich":"Was glaubst du?"}</p>
+    <div class="q">${esc(r.text)}</div>
+    <div class="grid">${["ja","nein"].map(v=>`<button class="opt big ${mine===v?"on":""}" data-a="ans" data-v="${v}">${v==="ja"?"Ja":"Nein"}</button>`).join("")}</div>`;
+  } else {
+    body=`<div class="q">${esc(r.text)}</div><div class="grid">${S.players.filter(p=>p.id!==pid).map(p=>`<button class="opt big ${mine===p.id?"on":""} ${p.online?"":"mut"}" data-a="ans" data-v="${esc(p.id)}">${esc(p.name)}</button>`).join("")}</div>`;
+  }
+  return `${rhead()}<div class="grow stack" style="justify-content:center">${body}
+  <p class="c mut" style="font-size:14px">${done?"Antwort gespeichert (du kannst sie noch ändern). ":""}${got} / ${need} haben geantwortet</p></div>
+  ${isHost()?`<button class="btn sec" data-a="reveal" ${got?"":"disabled"}>Jetzt auflösen</button>`:""}`;
+}
+function vReveal(){
+  const r=S.round,v=S.reveal;let body;
+  if(r.type==="gossip"){
+    const rows=Object.keys(v.guesses).map(id=>{const ok=v.right.includes(id);return `<div class="pl"><span>${esc(pname(id))}</span><span>${v.guesses[id]==="ja"?"Ja":"Nein"} · <b>${v.truth?(ok?"richtig":"falsch"):"–"}</b></span></div>`}).join("");
+    body=`<div class="q">${esc(r.text)}</div>
+    <div class="card c"><p class="mut" style="font-size:13px">Antwort von ${esc(pname(r.target))}</p><p style="font-size:32px;font-weight:700">${v.truth?(v.truth==="ja"?"Ja":"Nein"):"Keine Antwort"}</p></div>
+    <div class="card"><h2>Tipps</h2>${rows||'<p class="mut">Keine Tipps abgegeben.</p>'}</div>`;
+  } else {
+    const rows=S.players.map(p=>[p,v.counts[p.id]||0]).sort((a,b)=>b[1]-a[1]);
+    const max=rows[0][1];
+    body=`<div class="q" style="font-size:20px">${esc(r.text)}</div>
+    <div class="card c"><p class="mut" style="font-size:13px">Am häufigsten gewählt</p><p style="font-size:30px;font-weight:700">${v.winners.length?v.winners.map(id=>esc(pname(id))).join(" & "):"Niemand"}</p></div>
+    <div class="card">${rows.map(([p,c])=>`<div class="bar ${c===max&&c>0?"top":""}"><div class="l"><span>${esc(p.name)}</span><span>${c}</span></div><div class="b"><i data-w="${max?c/max*100:0}"></i></div></div>`).join("")}</div>`;
+  }
+  const last=r.idx+1>=S.total;
+  return `${rhead()}<div class="stack">${body}<div class="card"><h2>Punktestand</h2>${board()}</div></div>
+  ${isHost()?`<button class="btn" data-a="next">${last?"Ergebnis":"Nächste Runde"}</button>`:`<p class="mut c">Warte auf ${esc(pname(S.hostPid))} …</p>`}`;
+}
+function vEnd(){
+  const rows=S.players.slice().sort((a,b)=>b.score-a.score);
+  return `${header()}<h1 style="margin-top:12px">Ergebnis</h1><p class="mut">${esc(rows[0].name)} liegt vorn.</p>
+  <div class="card">${board()}</div>
+  ${isHost()?`<button class="btn" data-a="again">Zurück zur Lobby</button>`:`<p class="mut c">Warte auf ${esc(pname(S.hostPid))} …</p>`}`;
+}
+function render(){
+  let html;
+  if(!role) html=vHome();
+  else if(!S) html=`${header()}<p class="c mut" style="margin-top:40px">${esc(status||"Verbinde …")}</p>`;
+  else {
+    if(S.phase==="lobby")html=vLobby();
+    else if(S.phase==="spin")html=vSpin();
+    else if(S.phase==="answer")html=vAnswer();
+    else if(S.phase==="reveal")html=vReveal();
+    else html=vEnd();
+    if(lost)html=`<div class="err">Verbindung verloren. <button class="link" data-a="reconnect" style="color:var(--text);text-decoration:underline">Neu verbinden</button></div>`+html;
+  }
+  const key=S&&S.round?S.code+S.round.idx+S.phase:"";
+  if(S&&S.phase==="answer"&&mine!==null&&render.k!==key)mine=null;
+  render.k=key;
+  $app.innerHTML=html;
+  if(S&&S.phase==="spin")startWheel();
+  if(S&&S.phase==="reveal")requestAnimationFrame(()=>requestAnimationFrame(()=>$app.querySelectorAll("[data-w]").forEach(e=>e.style.width=e.dataset.w+"%")));
+}
+function cssv(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
+function drawWheel(cv,items){
+  const x=cv.getContext("2d"),W=cv.width,R=W/2-4,n=items.length,seg=2*Math.PI/n;
+  x.clearRect(0,0,W,W);
+  for(let i=0;i<n;i++){
+    const a=-Math.PI/2+i*seg;
+    x.beginPath();x.moveTo(W/2,W/2);x.arc(W/2,W/2,R,a,a+seg);x.closePath();
+    x.fillStyle=cssv(i%2?"--surface":"--soft");x.fill();x.lineWidth=2;x.strokeStyle=cssv("--line");x.stroke();
+    x.save();x.translate(W/2,W/2);x.rotate(a+seg/2);x.textAlign="right";x.textBaseline="middle";
+    x.fillStyle=cssv("--text");x.font="600 "+(n>8?26:32)+"px system-ui,sans-serif";
+    let t=items[i].name;if(t.length>11)t=t.slice(0,10)+"…";
+    x.fillText(t,R-22,0);x.restore();
+  }
+  x.beginPath();x.arc(W/2,W/2,R,0,2*Math.PI);x.lineWidth=4;x.strokeStyle=cssv("--ink");x.stroke();
+}
+function startWheel(){
+  const r=S.round,cv=document.getElementById("wheel");if(!cv)return;
+  drawWheel(cv,r.wheel);
+  const seg=360/r.wheel.length,fin=360*5-(r.spin+.5)*seg,key=S.code+r.idx;
+  if(spunKey===key){cv.style.transform=`rotate(${fin}deg)`;return}
+  spunKey=key;cv.style.transform="rotate(0deg)";
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{cv.style.transition="transform 4s cubic-bezier(.15,.6,.1,1)";cv.style.transform=`rotate(${fin}deg)`}));
+}
+
+/* ---------- Aktionen ---------- */
+const A = {
+  create(){const n=document.getElementById("nm").value.trim();if(!n)return;myName=n;ls.set("ex_name",n);hostRoom(n)},
+  join(){const n=document.getElementById("nm").value.trim(),c=document.getElementById("cd").value.trim().toUpperCase();
+    if(!n){err="Bitte Namen eingeben.";return render()}
+    if(c.length!==4){err="Der Code hat 4 Buchstaben.";return render()}
+    myName=n;ls.set("ex_name",n);joinRoom(c,n)},
+  leave(){if(S&&role==="host"&&!confirm("Raum schließen? Das beendet das Spiel für alle."))return;cleanup();err="";render()},
+  reconnect(){const r=JSON.parse(ss.get("ex_room")||"null");if(!r)return;try{peer&&peer.destroy()}catch(e){}S=null;joinRoom(r.code,r.name)},
+  mode(d){send({t:"set",mode:d.v,cats:S.cats,rounds:S.rounds})},
+  rounds(d){send({t:"set",mode:S.mode,cats:S.cats,rounds:+d.v})},
+  cat(d){const c=S.cats.includes(d.v)?S.cats.filter(k=>k!==d.v):[...S.cats,d.v];send({t:"set",mode:S.mode,cats:c,rounds:S.rounds})},
+  allcats(){send({t:"set",mode:S.mode,cats:Object.keys(CATS),rounds:S.rounds})},
+  nocats(){send({t:"set",mode:S.mode,cats:[],rounds:S.rounds})},
+  start(){send({t:"start"})},
+  ans(d){mine=d.v;send({t:"ans",v:d.v});if(role==="client")render()},
+  reveal(){send({t:"reveal"})},
+  next(){send({t:"next"})},
+  again(){send({t:"again"})},
+  async share(){
+    const url=location.origin+location.pathname+"?r="+S.code,text="Komm in meinen Exposed-Raum: "+S.code;
+    try{if(navigator.share){await navigator.share({title:"Exposed",text,url});return}}catch(e){if(e&&e.name==="AbortError")return}
+    try{await navigator.clipboard.writeText(url);alert("Link kopiert.")}catch(e){prompt("Link kopieren:",url)}
+  }
+};
+$app.addEventListener("click",e=>{const b=e.target.closest("[data-a]");if(b&&!b.disabled&&A[b.dataset.a])A[b.dataset.a](b.dataset)});
+$app.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="cd")A.join()});
+
+render();
+(function(){const r=JSON.parse(ss.get("ex_room")||"null");if(r&&r.code&&r.name)joinRoom(r.code,r.name)})();
 </script>
 </body>
 </html>
