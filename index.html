@@ -53,10 +53,17 @@ input[type=text]:focus{outline:2px solid var(--ink);outline-offset:-1px}
 .bar{margin:10px 0}.bar .l{display:flex;justify-content:space-between;margin-bottom:4px}
 .bar .b{height:8px;background:var(--soft);border-radius:4px;overflow:hidden}.bar .b i{display:block;height:100%;background:var(--mut);width:0;transition:width .7s ease}
 .bar.top .b i{background:var(--ink)}.bar.top .l{font-weight:700}
-.wheelwrap{position:relative;width:var(--w);height:var(--w);margin:6px auto;--w:min(310px,82vw)}
-.wheelwrap canvas{width:100%;height:100%;display:block}
-.pointer{position:absolute;left:50%;top:-6px;width:0;height:0;margin-left:-10px;border:10px solid transparent;border-top:18px solid var(--ink);z-index:2}
-.hub{position:absolute;left:50%;top:50%;width:18px;height:18px;margin:-9px;border-radius:50%;background:var(--ink);z-index:2}
+.ring{position:relative;width:min(320px,86vw);aspect-ratio:1;margin:8px auto;border:1px solid var(--line);border-radius:50%}
+.ring .mid{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;color:var(--mut);font-size:13px;width:90px}
+.av{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:0;padding:0;font-size:12px;width:64px}
+.av i{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;font-style:normal;font-weight:700;font-size:16px}
+.av.on i{background:var(--ink);color:var(--ink-t);border-color:var(--ink)}
+.av.done i{border-color:var(--ink)}
+textarea{width:100%;padding:12px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);color:var(--text);font:inherit;resize:none;min-height:70px}
+textarea:focus{outline:2px solid var(--ink);outline-offset:-1px}
+label{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:5px}
+.blk{border-left:3px solid var(--ink);padding:2px 0 2px 12px}
+.blk p{font-size:19px;font-weight:600;line-height:1.35}
 .sc{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line)}.sc:last-child{border:0}
 .err{border:1px solid var(--ink);border-radius:var(--r);padding:12px;font-size:14px}
 .grow{flex:1}
@@ -102,7 +109,20 @@ alltag:["Hat {n} schon mal krankgemacht, ohne krank zu sein?","Hat {n} schon mal
 wild:["Hat {n} schon mal einen Promi getroffen und sich blamiert?","Hat {n} schon mal etwas Verrücktes für eine Wette getan?","Hat {n} schon mal spontan eine Reise gebucht?","Hat {n} schon mal ein Tattoo oder Piercing spontan stechen lassen?","Hat {n} schon mal bei einer Mutprobe mitgemacht?","Hat {n} schon mal im Ausland die Polizei gebraucht?","Hat {n} schon mal unter falschem Namen etwas bestellt?","Hat {n} schon mal aus Trotz einen ganzen Tag geschwiegen?"],
 dunkel:["Hat {n} schon mal etwas mitgehen lassen?","Hat {n} schon mal bei einer Prüfung gespickt?","Hat {n} schon mal jemanden absichtlich geghostet?","Hat {n} schon mal jemanden angelogen, nur um sich zu schützen?","Hat {n} schon mal einen Freund hintergangen?","Hat {n} schon mal einen Fund behalten, statt ihn abzugeben?","Hat {n} schon mal Rache geplant?","Hat {n} schon mal ein versprochenes Geheimnis verraten?"]
 };
-const MODES = {gossip:"Gossip Wheel", likely:"Wer am ehesten", mix:"Mix"};
+const MODES = {gossip:"Gossip Wheel", likely:"Wer am ehesten"};
+const CHAL = {
+harmlos:["Mach 10 Kniebeugen.","Sprich 1 Minute mit einem Akzent deiner Wahl.","Erzähl einen Witz, bei dem alle lachen müssen.","Imitiere ein Tier, bis jemand es errät.","Sing den Refrain deines Lieblingssongs."],
+freunde:["Mach jeder Person in der Runde ein ehrliches Kompliment.","Lass die Gruppe dein Hintergrundbild kommentieren.","Zeig das letzte Foto in deiner Galerie.","Umarme eine Person deiner Wahl 10 Sekunden lang.","Erzähl eine Geschichte über einen Freund, ohne Namen zu nennen."],
+peinlich:["Tanze 30 Sekunden ohne Musik.","Lies deine letzte Suchanfrage laut vor.","Sprich 2 Minuten nur im Flüsterton.","Zeig dein peinlichstes Foto.","Mach deinen besten Model-Walk durch den Raum."],
+party:["Starte ein Lied deiner Wahl und tanze dazu.","Halte einen Toast auf die Gruppe.","Gib einer Person einen Spitznamen für den Abend.","Erfinde einen Trinkspruch und führe ihn vor.","Trink ein Glas Wasser auf Ex."],
+beziehung:["Lies die letzte Nachricht an deinen Schwarm vor, oder erfinde eine.","Schreib eine Liebeserklärung an einen Gegenstand im Raum.","Spiele das erste Date nach.","Gib der Runde einen Dating-Tipp.","Erzähl von deinem schlimmsten Date."],
+spicy:["Flirte 30 Sekunden mit einem Gegenstand.","Gib einer Person ein Kompliment zu ihrem Aussehen.","Verrate deinen größten Turn-on in einem Wort.","Sag etwas Gewagtes ins Ohr einer Person deiner Wahl.","Küss deinen Handrücken wie im Film."],
+dirty:["Beschreibe dein perfektes Date in 3 Sätzen.","Verrate dein verrücktestes Date.","Beichte etwas oder trink.","Sag, wen aus der Runde du am ehesten küssen würdest.","Erzähl dein peinlichstes Erlebnis im Schlafzimmer."],
+alltag:["Halte 30 Sekunden eine Rede, warum du befördert werden solltest.","Verkaufe der Runde einen Stift in 30 Sekunden.","Erzähl deinen Plan für die nächsten 10 Jahre.","Imitiere deinen Chef.","Schreib deine Kündigung in einem Satz."],
+wild:["Mach 20 Sekunden lang Planking.","Erfinde einen Werbespot für einen Gegenstand im Raum.","Spiele eine Filmszene ohne Worte.","Lauf wie ein Roboter einmal durch den Raum.","Mach ein Selfie mit deiner verrücktesten Grimasse und zeig es."],
+dunkel:["Beichte eine kleine Lüge, die du erzählt hast.","Verrate ein Geheimnis, das niemand hier kennt.","Sag, wen du hier für den größten Lügner hältst.","Erzähl von einer Sache, die du bereust.","Verrate, was du schon mal über jemanden hier gesagt hast."]
+};
+const pick = a => a[Math.floor(Math.random()*a.length)];
 
 /* ---------- Helfer ---------- */
 const $app = document.getElementById("app");
@@ -116,7 +136,7 @@ const genCode = () => {const a="ABCDEFGHJKLMNPQRSTUVWXYZ";let c="";for(let i=0;i
 
 /* ---------- Zustand ---------- */
 let role=null, peer=null, conn=null, conns={}, S=null, H=null;
-let err="", status="", lost=false, mine=null, spunKey=null, myName=ls.get("ex_name")||"";
+let err="", status="", lost=false, mine=null, myName=ls.get("ex_name")||"";
 const pname = id => (S.players.find(p=>p.id===id)||{name:"?"}).name;
 
 function cleanup(){
@@ -131,8 +151,8 @@ function hostRoom(name){
   const code=genCode();
   const p=new Peer("exposed-"+code,OPTS);peer=p;
   p.on("open",()=>{
-    S={code,hostPid:pid,phase:"lobby",players:[{id:pid,name,online:true,score:0}],mode:"gossip",cats:Object.keys(CATS),rounds:10,round:null,answered:[],reveal:null};
-    H={answers:{},pool:[],bag:[],idx:0,timer:null};
+    S={code,hostPid:pid,phase:"lobby",players:[{id:pid,name,online:true,score:0}],mode:"gossip",cats:Object.keys(CATS),rounds:10,passes:1,pass:0,round:null,card:null,answered:[],reveal:null};
+    H={answers:{},pool:[],idx:0,timer:null,subs:{},cards:[],ci:0,react:{},judge:{},cr:null,cj:null};
     status="";bc();
   });
   p.on("connection",c=>{
@@ -173,7 +193,7 @@ function drop(c){
   delete conns[id];
   if(S.phase==="lobby") S.players=S.players.filter(p=>p.id!==id);
   else {const pl=S.players.find(p=>p.id===id);if(pl)pl.online=false;}
-  checkAll();bc();
+  checkAll();checkSubs();bc();
 }
 const required = () => S.players.filter(p=>p.online).map(p=>p.id);
 function checkAll(){
@@ -183,6 +203,7 @@ function checkAll(){
     setTimeout(()=>{H.pending=false;if(S.phase==="answer"&&S.round.idx===idx)doReveal()},700);
   }
 }
+const clip = s => String(s||"").trim().slice(0,140);
 function act(p,d){
   if(!S||!S.players.some(x=>x.id===p))return;
   const host=p===S.hostPid;
@@ -190,77 +211,113 @@ function act(p,d){
     case "set":
       if(!host||S.phase!=="lobby")return;
       if(d.mode in MODES)S.mode=d.mode;
-      if(Array.isArray(d.cats)){const c=d.cats.filter(k=>k in CATS);S.cats=c}
+      if(Array.isArray(d.cats))S.cats=d.cats.filter(k=>k in CATS);
       if([5,10,15,20,30].includes(d.rounds))S.rounds=d.rounds;
+      if([1,2,3].includes(d.passes))S.passes=d.passes;
       bc();break;
     case "start":
       if(host&&S.phase==="lobby")startGame();break;
     case "ans":
-      if(S.phase!=="answer")return;
-      if(S.round.type==="gossip"){if(d.v!=="ja"&&d.v!=="nein")return}
-      else if(!(S.players.some(x=>x.id===d.v)&&d.v!==p))return;
+      if(S.phase!=="answer"||!S.players.some(x=>x.id===d.v)||d.v===p)return;
       H.answers[p]=d.v;S.answered=Object.keys(H.answers);checkAll();bc();break;
     case "reveal":
       if(host&&S.phase==="answer")doReveal();break;
     case "next":
       if(host&&S.phase==="reveal")nextRound();break;
+    case "sub":{
+      if(S.phase!=="write")return;
+      const g=clip(d.gossip),q=clip(d.question),c=clip(d.challenge);
+      if(d.target===p||!S.players.some(x=>x.id===d.target)||!g||!q||!c)return;
+      H.subs[p]={target:d.target,gossip:g,question:q,challenge:c};
+      S.answered=Object.keys(H.subs);checkSubs();bc();break}
+    case "go":
+      if(host&&S.phase==="write")startCards();break;
+    case "gv":{
+      if(S.phase!=="card"||p===S.card.target)return;
+      if(S.card.step===0&&(d.v==="stimmt"||d.v==="quatsch"))H.react[p]=d.v;
+      else if(S.card.step===2&&(d.v==="ok"||d.v==="no"))H.judge[p]=d.v;
+      else return;
+      S.answered=Object.keys(S.card.step===0?H.react:H.judge);bc();break}
+    case "gnext":
+      if(host&&S.phase==="card")cardNext();break;
     case "again":
-      if(host&&S.phase==="end"){S.phase="lobby";S.round=null;S.reveal=null;S.answered=[];S.players=S.players.filter(x=>x.online);S.players.forEach(x=>x.score=0);bc()}break;
+      if(host&&S.phase==="end"){clearTimeout(H.timer);S.phase="lobby";S.round=null;S.card=null;S.reveal=null;S.answered=[];S.players=S.players.filter(x=>x.online);S.players.forEach(x=>x.score=0);bc()}break;
   }
 }
 function startGame(){
   const on=S.players.filter(p=>p.online);
   if(on.length<3||!S.cats.length)return;
   S.players=on;S.players.forEach(p=>p.score=0);
+  if(S.mode==="gossip"){S.pass=0;return startWrite()}
   const pool=[];
-  S.cats.forEach(k=>{
-    if(S.mode!=="likely")GOSSIP[k].forEach(q=>pool.push({type:"gossip",cat:k,text:q}));
-    if(S.mode!=="gossip")CATS[k].q.forEach(q=>pool.push({type:"likely",cat:k,text:q}));
-  });
-  H.pool=shuffle(pool).slice(0,S.rounds);H.idx=-1;H.bag=[];
-  S.total=H.pool.length;
+  S.cats.forEach(k=>CATS[k].q.forEach(q=>pool.push({cat:k,text:q})));
+  H.pool=shuffle(pool).slice(0,S.rounds);H.idx=-1;S.total=H.pool.length;
   nextRound();
 }
+/* Gossip Wheel: alle schreiben, dann werden die Karten nacheinander aufgedeckt */
+function startWrite(){
+  H.subs={};H.pending=false;S.answered=[];S.card=null;S.phase="write";bc();
+}
+function checkSubs(){
+  if(S.phase!=="write"||H.pending)return;
+  const req=required();
+  if(req.length&&req.every(id=>id in H.subs)){
+    H.pending=true;
+    setTimeout(()=>{H.pending=false;if(S.phase==="write")startCards()},1200);
+  }
+}
+function startCards(){
+  const cs=Object.values(H.subs).filter(s=>S.players.some(x=>x.id===s.target));
+  if(!cs.length)return;
+  H.cards=shuffle(cs);H.ci=-1;cardAdvance();
+}
+function cardAdvance(){
+  H.ci++;H.react={};H.judge={};H.cr=null;H.cj=null;
+  if(H.ci>=H.cards.length){
+    S.pass++;
+    if(S.pass<S.passes)return startWrite();
+    S.phase="end";S.card=null;S.answered=[];return bc();
+  }
+  S.phase="card";cardView(0);
+}
+function cardView(step){
+  const c=H.cards[H.ci],o={i:H.ci,n:H.cards.length,pass:S.pass,target:c.target,step,gossip:c.gossip};
+  if(step>=1){o.question=c.question;o.react=H.cr}
+  if(step>=2)o.challenge=c.challenge;
+  if(step>=3)o.judge=H.cj;
+  S.card=o;S.answered=[];bc();
+}
+function cardNext(){
+  const c=H.cards[H.ci],st=S.card.step;
+  if(st===0){
+    const v=Object.values(H.react);
+    H.cr={s:v.filter(x=>x==="stimmt").length,q:v.filter(x=>x==="quatsch").length};
+    return cardView(1);
+  }
+  if(st===1)return cardView(2);
+  if(st===2){
+    const v=Object.values(H.judge),ok=v.filter(x=>x==="ok").length,no=v.filter(x=>x==="no").length;
+    H.cj={ok,no,pt:ok>no};
+    if(H.cj.pt)score(c.target,1);
+    return cardView(3);
+  }
+  cardAdvance();
+}
+/* Wer am ehesten */
 function nextRound(){
-  clearTimeout(H.timer);
   H.idx++;H.answers={};H.pending=false;S.answered=[];S.reveal=null;
   if(H.idx>=H.pool.length){S.phase="end";S.round=null;return bc()}
   const it=H.pool[H.idx];
-  const round={idx:H.idx,type:it.type,cat:it.cat,text:it.text,target:null};
-  if(it.type==="gossip"){
-    const wheel=S.players.filter(p=>p.online);
-    if(!H.bag.length)H.bag=shuffle(wheel.map(p=>p.id));
-    let tid=H.bag.pop();if(!wheel.some(p=>p.id===tid))tid=wheel[Math.floor(Math.random()*wheel.length)].id;
-    round.target=tid;round.wheel=wheel.map(p=>({id:p.id,name:p.name}));
-    round.spin=wheel.findIndex(p=>p.id===tid);
-    round.text=it.text.replace("{n}",pname(tid));
-    S.round=round;S.phase="spin";
-    const idx=H.idx;
-    H.timer=setTimeout(()=>{if(S.phase==="spin"&&S.round.idx===idx){S.phase="answer";bc()}},4800);
-  } else {S.round=round;S.phase="answer"}
-  bc();
+  S.round={idx:H.idx,type:"likely",cat:it.cat,text:it.text};S.phase="answer";bc();
 }
 function score(id,n){const p=S.players.find(x=>x.id===id);if(p)p.score+=n}
 function doReveal(){
-  const r=S.round,ans=H.answers;let rev;
-  if(r.type==="gossip"){
-    const truth=ans[r.target]||null,guesses={},right=[];
-    S.players.forEach(p=>{if(p.id!==r.target&&ans[p.id])guesses[p.id]=ans[p.id]});
-    if(truth){
-      Object.keys(guesses).forEach(id=>{if(guesses[id]===truth)right.push(id)});
-      right.forEach(id=>score(id,1));
-      score(r.target,Object.keys(guesses).length-right.length);
-    }
-    rev={truth,guesses,right};
-  } else {
-    const counts={};
-    Object.values(ans).forEach(v=>{if(S.players.some(x=>x.id===v))counts[v]=(counts[v]||0)+1});
-    const max=Math.max(0,...Object.values(counts));
-    const winners=max?Object.keys(counts).filter(k=>counts[k]===max):[];
-    winners.forEach(id=>score(id,1));
-    rev={counts,winners};
-  }
-  S.reveal=rev;S.phase="reveal";bc();
+  const ans=H.answers,counts={};
+  Object.values(ans).forEach(v=>{if(S.players.some(x=>x.id===v))counts[v]=(counts[v]||0)+1});
+  const max=Math.max(0,...Object.values(counts));
+  const winners=max?Object.keys(counts).filter(k=>counts[k]===max):[];
+  winners.forEach(id=>score(id,1));
+  S.reveal={counts,winners};S.phase="reveal";bc();
 }
 
 /* ---------- Client ---------- */
@@ -315,12 +372,13 @@ function vLobby(){
     ${on<3?`<p class="mut" style="margin-top:10px;font-size:14px">Mindestens 3 Spieler nötig.</p>`:""}</div>`;
   if(h){
     h2+=`<div class="card stack"><h2>Modus</h2><div class="seg">${Object.entries(MODES).map(([k,n])=>`<button class="${S.mode===k?"on":""}" data-a="mode" data-v="${k}">${n}</button>`).join("")}</div>
-    <h2 style="margin-top:6px">Runden</h2><div class="seg">${[5,10,15,20,30].map(n=>`<button class="${S.rounds===n?"on":""}" data-a="rounds" data-v="${n}">${n}</button>`).join("")}</div></div>
+    <p class="mut" style="font-size:14px">${S.mode==="gossip"?"Jeder tippt eine Person an und schreibt anonym Gossip, eine Frage und eine Challenge. Danach werden die Karten aufgedeckt.":"Alle wählen geheim, wer am ehesten zur Frage passt."}</p>
+    ${S.mode==="gossip"?`<h2 style="margin-top:6px">Durchgänge</h2><div class="seg">${[1,2,3].map(n=>`<button class="${S.passes===n?"on":""}" data-a="passes" data-v="${n}">${n}</button>`).join("")}</div>`:`<h2 style="margin-top:6px">Runden</h2><div class="seg">${[5,10,15,20,30].map(n=>`<button class="${S.rounds===n?"on":""}" data-a="rounds" data-v="${n}">${n}</button>`).join("")}</div>`}</div>
     <div class="card stack"><h2>Kategorien</h2>${Object.entries(CATS).map(([k,c])=>`<button class="opt ${S.cats.includes(k)?"on":""}" data-a="cat" data-v="${k}"><span>${esc(c.n)}<br><small>${esc(c.d)}</small></span><span>${S.cats.includes(k)?"✓":""}</span></button>`).join("")}
       <div class="row"><button class="btn sec" data-a="allcats">Alle</button><button class="btn sec" data-a="nocats">Keine</button></div></div>
     <button class="btn" data-a="start" ${on<3||!S.cats.length?"disabled":""}>Spiel starten</button>`;
   } else {
-    h2+=`<div class="card"><h2>Einstellungen</h2><p>${esc(MODES[S.mode])} · ${S.rounds} Runden</p><p class="mut" style="font-size:14px;margin-top:4px">${S.cats.map(k=>esc(CATS[k].n)).join(", ")||"Keine Kategorie"}</p></div>
+    h2+=`<div class="card"><h2>Einstellungen</h2><p>${esc(MODES[S.mode])} · ${S.mode==="gossip"?S.passes+(S.passes>1?" Durchgänge":" Durchgang"):S.rounds+" Runden"}</p><p class="mut" style="font-size:14px;margin-top:4px">${S.cats.map(k=>esc(CATS[k].n)).join(", ")||"Keine Kategorie"}</p></div>
     <p class="mut c">Warte, bis ${esc(pname(S.hostPid))} das Spiel startet …</p>`;
   }
   return h2;
@@ -328,44 +386,68 @@ function vLobby(){
 function rhead(){
   const r=S.round;
   return `${header()}<div class="prog"><i style="width:${r.idx/S.total*100}%"></i></div>
-  <div class="tag">Runde ${r.idx+1} / ${S.total} · ${esc(CATS[r.cat].n)} · ${r.type==="gossip"?"Gossip Wheel":"Wer am ehesten"}</div>`;
+  <div class="tag">Runde ${r.idx+1} / ${S.total} · ${esc(CATS[r.cat].n)} · Wer am ehesten</div>`;
 }
-function vSpin(){
-  return `${rhead()}<div class="grow stack" style="justify-content:center"><p class="c mut">Das Rad entscheidet …</p>
-  <div class="wheelwrap"><div class="pointer"></div><div class="hub"></div><canvas id="wheel" width="620" height="620"></canvas></div></div>`;
+let draft={key:""};
+function newDraft(key){return {key,target:null,gossip:"",question:"",challenge:"",sent:false}}
+function wstText(){
+  const req=required(),got=S.answered.filter(id=>req.includes(id)).length;
+  return {got,txt:`${draft.sent?"Gesendet. ":""}${got} / ${req.length} fertig`};
+}
+function vWrite(){
+  const key=S.code+S.pass;if(draft.key!==key)draft=newDraft(key);
+  const others=S.players.filter(p=>p.id!==pid),n=others.length,w=wstText();
+  const t=others.find(p=>p.id===draft.target);
+  const ring=others.map((p,i)=>{
+    const a=2*Math.PI*i/n-Math.PI/2,nm=p.name.length>9?p.name.slice(0,8)+"…":p.name;
+    return `<button class="av ${p.id===draft.target?"on":""}" data-a="pick" data-v="${esc(p.id)}" style="left:${(50+39*Math.cos(a)).toFixed(1)}%;top:${(50+39*Math.sin(a)).toFixed(1)}%"><i>${esc(p.name[0].toUpperCase())}</i><span>${esc(nm)}</span></button>`;
+  }).join("");
+  const form=t?`<div class="card stack"><h2>Für ${esc(t.name)}</h2>
+    <div><label>Gossip (anonym)</label><textarea id="fg" maxlength="140" placeholder="Schreib ein Gerücht oder eine Beobachtung …">${esc(draft.gossip)}</textarea></div>
+    <div><label>Frage</label><div class="row" style="align-items:stretch"><input type="text" id="fq" maxlength="140" value="${esc(draft.question)}" placeholder="Frage an ${esc(t.name)}"><button class="btn sec" data-a="fillq" style="width:86px;flex:none;padding:8px">Zufall</button></div></div>
+    <div><label>Challenge</label><div class="row" style="align-items:stretch"><input type="text" id="fc" maxlength="140" value="${esc(draft.challenge)}" placeholder="Aufgabe für ${esc(t.name)}"><button class="btn sec" data-a="fillc" style="width:86px;flex:none;padding:8px">Zufall</button></div></div>
+    <button class="btn" id="sb" data-a="sendsub" ${draft.gossip.trim()&&draft.question.trim()&&draft.challenge.trim()?"":"disabled"}>${draft.sent?"Aktualisieren":"Senden"}</button></div>`
+    :`<p class="c mut">Tippe auf eine Person und gib ihr Gossip, eine Frage und eine Challenge.</p>`;
+  return `${header()}<div class="tag">Gossip Wheel${S.passes>1?` · Durchgang ${S.pass+1} / ${S.passes}`:""}</div>
+  <div class="ring"><div class="mid">Du<br>wählst</div>${ring}</div>${form}
+  <p class="c mut" id="wst" style="font-size:14px">${w.txt}</p>
+  ${isHost()?`<button class="btn sec" id="gob" data-a="go" ${w.got?"":"disabled"}>Weiter zu den Karten</button>`:""}`;
+}
+function vCard(){
+  const c=S.card,tg=c.target===pid,name=esc(pname(c.target));
+  const nv=S.players.filter(p=>p.online&&p.id!==c.target).length,got=S.answered.length;
+  let h=`${header()}<div class="tag">Gossip Wheel · Karte ${c.i+1} / ${c.n}${S.passes>1?` · Durchgang ${c.pass+1} / ${S.passes}`:""}</div>
+  <div class="card c"><p class="mut" style="font-size:13px">Es geht um</p><p style="font-size:30px;font-weight:700">${tg?"dich":name}</p></div><div class="stack">
+  <div class="blk"><label>Gossip</label><p>${esc(c.gossip)}</p></div>`;
+  const btns=(a,b)=>`<div class="grid">${[a,b].map(([v,l])=>`<button class="opt big ${mine===v?"on":""}" data-a="gv" data-v="${v}">${l}</button>`).join("")}</div><p class="c mut" style="font-size:14px">${got} / ${nv} haben abgestimmt</p>`;
+  if(c.step===0)h+=tg?`<p class="mut c">Die anderen reagieren gerade …</p>`:btns(["stimmt","Stimmt"],["quatsch","Quatsch"]);
+  if(c.step>=1)h+=`<p class="mut" style="font-size:14px">Reaktionen: ${c.react.s}× Stimmt · ${c.react.q}× Quatsch</p>
+    <div class="blk"><label>Frage an ${tg?"dich":name}</label><p>${esc(c.question)}</p></div>`;
+  if(c.step>=2)h+=`<div class="blk"><label>Challenge für ${tg?"dich":name}</label><p>${esc(c.challenge)}</p></div>`;
+  if(c.step===2)h+=tg?`<p class="mut c">Führe die Challenge aus. Die anderen entscheiden.</p>`:btns(["ok","Geschafft"],["no","Gepasst"]);
+  if(c.step>=3)h+=`<div class="card c"><p style="font-size:20px;font-weight:700">${c.judge.pt?"Geschafft · +1 Punkt":"Nicht geschafft"}</p><p class="mut" style="font-size:14px">${c.judge.ok} : ${c.judge.no}</p></div><div class="card"><h2>Punktestand</h2>${board()}</div>`;
+  h+=`</div>`;
+  const lbl=["Frage zeigen","Challenge zeigen","Auflösen",c.i+1>=c.n?(S.pass+1<S.passes?"Nächster Durchgang":"Ergebnis"):"Nächste Karte"][c.step];
+  h+=isHost()?`<button class="btn" data-a="gnext">${lbl}</button>`:`<p class="mut c">${esc(pname(S.hostPid))} steuert die Karten.</p>`;
+  return h;
 }
 function vAnswer(){
   const r=S.round,need=required().length,got=S.answered.filter(id=>required().includes(id)).length;
   const done=S.answered.includes(pid);
-  let body;
-  if(r.type==="gossip"){
-    const t=r.target===pid;
-    body=`<p class="tag">${t?"Es geht um dich – antworte ehrlich":"Was glaubst du?"}</p>
-    <div class="q">${esc(r.text)}</div>
-    <div class="grid">${["ja","nein"].map(v=>`<button class="opt big ${mine===v?"on":""}" data-a="ans" data-v="${v}">${v==="ja"?"Ja":"Nein"}</button>`).join("")}</div>`;
-  } else {
-    body=`<div class="q">${esc(r.text)}</div><div class="grid">${S.players.filter(p=>p.id!==pid).map(p=>`<button class="opt big ${mine===p.id?"on":""} ${p.online?"":"mut"}" data-a="ans" data-v="${esc(p.id)}">${esc(p.name)}</button>`).join("")}</div>`;
-  }
+  const body=`<div class="q">${esc(r.text)}</div><div class="grid">${S.players.filter(p=>p.id!==pid).map(p=>`<button class="opt big ${mine===p.id?"on":""} ${p.online?"":"mut"}" data-a="ans" data-v="${esc(p.id)}">${esc(p.name)}</button>`).join("")}</div>`;
   return `${rhead()}<div class="grow stack" style="justify-content:center">${body}
   <p class="c mut" style="font-size:14px">${done?"Antwort gespeichert (du kannst sie noch ändern). ":""}${got} / ${need} haben geantwortet</p></div>
   ${isHost()?`<button class="btn sec" data-a="reveal" ${got?"":"disabled"}>Jetzt auflösen</button>`:""}`;
 }
 function vReveal(){
-  const r=S.round,v=S.reveal;let body;
-  if(r.type==="gossip"){
-    const rows=Object.keys(v.guesses).map(id=>{const ok=v.right.includes(id);return `<div class="pl"><span>${esc(pname(id))}</span><span>${v.guesses[id]==="ja"?"Ja":"Nein"} · <b>${v.truth?(ok?"richtig":"falsch"):"–"}</b></span></div>`}).join("");
-    body=`<div class="q">${esc(r.text)}</div>
-    <div class="card c"><p class="mut" style="font-size:13px">Antwort von ${esc(pname(r.target))}</p><p style="font-size:32px;font-weight:700">${v.truth?(v.truth==="ja"?"Ja":"Nein"):"Keine Antwort"}</p></div>
-    <div class="card"><h2>Tipps</h2>${rows||'<p class="mut">Keine Tipps abgegeben.</p>'}</div>`;
-  } else {
-    const rows=S.players.map(p=>[p,v.counts[p.id]||0]).sort((a,b)=>b[1]-a[1]);
-    const max=rows[0][1];
-    body=`<div class="q" style="font-size:20px">${esc(r.text)}</div>
-    <div class="card c"><p class="mut" style="font-size:13px">Am häufigsten gewählt</p><p style="font-size:30px;font-weight:700">${v.winners.length?v.winners.map(id=>esc(pname(id))).join(" & "):"Niemand"}</p></div>
-    <div class="card">${rows.map(([p,c])=>`<div class="bar ${c===max&&c>0?"top":""}"><div class="l"><span>${esc(p.name)}</span><span>${c}</span></div><div class="b"><i data-w="${max?c/max*100:0}"></i></div></div>`).join("")}</div>`;
-  }
+  const r=S.round,v=S.reveal;
+  const rows=S.players.map(p=>[p,v.counts[p.id]||0]).sort((a,b)=>b[1]-a[1]);
+  const max=rows[0][1];
   const last=r.idx+1>=S.total;
-  return `${rhead()}<div class="stack">${body}<div class="card"><h2>Punktestand</h2>${board()}</div></div>
+  return `${rhead()}<div class="stack"><div class="q" style="font-size:20px">${esc(r.text)}</div>
+  <div class="card c"><p class="mut" style="font-size:13px">Am häufigsten gewählt</p><p style="font-size:30px;font-weight:700">${v.winners.length?v.winners.map(id=>esc(pname(id))).join(" & "):"Niemand"}</p></div>
+  <div class="card">${rows.map(([p,c])=>`<div class="bar ${c===max&&c>0?"top":""}"><div class="l"><span>${esc(p.name)}</span><span>${c}</span></div><div class="b"><i data-w="${max?c/max*100:0}"></i></div></div>`).join("")}</div>
+  <div class="card"><h2>Punktestand</h2>${board()}</div></div>
   ${isHost()?`<button class="btn" data-a="next">${last?"Ergebnis":"Nächste Runde"}</button>`:`<p class="mut c">Warte auf ${esc(pname(S.hostPid))} …</p>`}`;
 }
 function vEnd(){
@@ -374,47 +456,30 @@ function vEnd(){
   <div class="card">${board()}</div>
   ${isHost()?`<button class="btn" data-a="again">Zurück zur Lobby</button>`:`<p class="mut c">Warte auf ${esc(pname(S.hostPid))} …</p>`}`;
 }
-function render(){
+function render(force){
+  if(!force&&S&&S.phase==="write"&&render.w===S.code+S.pass&&document.getElementById("wst")){
+    const w=wstText();document.getElementById("wst").textContent=w.txt;
+    const g=document.getElementById("gob");if(g)g.disabled=!w.got;
+    return;
+  }
   let html;
   if(!role) html=vHome();
   else if(!S) html=`${header()}<p class="c mut" style="margin-top:40px">${esc(status||"Verbinde …")}</p>`;
   else {
     if(S.phase==="lobby")html=vLobby();
-    else if(S.phase==="spin")html=vSpin();
+    else if(S.phase==="write")html=vWrite();
+    else if(S.phase==="card")html=vCard();
     else if(S.phase==="answer")html=vAnswer();
     else if(S.phase==="reveal")html=vReveal();
     else html=vEnd();
     if(lost)html=`<div class="err">Verbindung verloren. <button class="link" data-a="reconnect" style="color:var(--text);text-decoration:underline">Neu verbinden</button></div>`+html;
   }
-  const key=S&&S.round?S.code+S.round.idx+S.phase:"";
-  if(S&&S.phase==="answer"&&mine!==null&&render.k!==key)mine=null;
+  const key=S?S.code+S.phase+(S.round?S.round.idx:"")+(S.card?S.card.i+"s"+S.card.step:"")+(S.pass||""):"";
+  if(mine!==null&&render.k!==key)mine=null;
   render.k=key;
+  render.w=S&&S.phase==="write"?S.code+S.pass:"";
   $app.innerHTML=html;
-  if(S&&S.phase==="spin")startWheel();
   if(S&&S.phase==="reveal")requestAnimationFrame(()=>requestAnimationFrame(()=>$app.querySelectorAll("[data-w]").forEach(e=>e.style.width=e.dataset.w+"%")));
-}
-function cssv(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
-function drawWheel(cv,items){
-  const x=cv.getContext("2d"),W=cv.width,R=W/2-4,n=items.length,seg=2*Math.PI/n;
-  x.clearRect(0,0,W,W);
-  for(let i=0;i<n;i++){
-    const a=-Math.PI/2+i*seg;
-    x.beginPath();x.moveTo(W/2,W/2);x.arc(W/2,W/2,R,a,a+seg);x.closePath();
-    x.fillStyle=cssv(i%2?"--surface":"--soft");x.fill();x.lineWidth=2;x.strokeStyle=cssv("--line");x.stroke();
-    x.save();x.translate(W/2,W/2);x.rotate(a+seg/2);x.textAlign="right";x.textBaseline="middle";
-    x.fillStyle=cssv("--text");x.font="600 "+(n>8?26:32)+"px system-ui,sans-serif";
-    let t=items[i].name;if(t.length>11)t=t.slice(0,10)+"…";
-    x.fillText(t,R-22,0);x.restore();
-  }
-  x.beginPath();x.arc(W/2,W/2,R,0,2*Math.PI);x.lineWidth=4;x.strokeStyle=cssv("--ink");x.stroke();
-}
-function startWheel(){
-  const r=S.round,cv=document.getElementById("wheel");if(!cv)return;
-  drawWheel(cv,r.wheel);
-  const seg=360/r.wheel.length,fin=360*5-(r.spin+.5)*seg,key=S.code+r.idx;
-  if(spunKey===key){cv.style.transform=`rotate(${fin}deg)`;return}
-  spunKey=key;cv.style.transform="rotate(0deg)";
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{cv.style.transition="transform 4s cubic-bezier(.15,.6,.1,1)";cv.style.transform=`rotate(${fin}deg)`}));
 }
 
 /* ---------- Aktionen ---------- */
@@ -431,7 +496,15 @@ const A = {
   cat(d){const c=S.cats.includes(d.v)?S.cats.filter(k=>k!==d.v):[...S.cats,d.v];send({t:"set",mode:S.mode,cats:c,rounds:S.rounds})},
   allcats(){send({t:"set",mode:S.mode,cats:Object.keys(CATS),rounds:S.rounds})},
   nocats(){send({t:"set",mode:S.mode,cats:[],rounds:S.rounds})},
+  passes(d){send({t:"set",mode:S.mode,cats:S.cats,rounds:S.rounds,passes:+d.v})},
   start(){send({t:"start"})},
+  pick(d){draft.target=d.v;draft.sent=false;render(true)},
+  fillq(){const k=pick(S.cats);draft.question=pick(GOSSIP[k]).replace("Hat {n}","Hast du");draft.sent=false;render(true)},
+  fillc(){draft.challenge=pick(CHAL[pick(S.cats)]);draft.sent=false;render(true)},
+  sendsub(){if(!draft.target)return;send({t:"sub",target:draft.target,gossip:draft.gossip,question:draft.question,challenge:draft.challenge});draft.sent=true;render(true)},
+  go(){send({t:"go"})},
+  gv(d){mine=d.v;send({t:"gv",v:d.v});if(role==="client")render()},
+  gnext(){send({t:"gnext"})},
   ans(d){mine=d.v;send({t:"ans",v:d.v});if(role==="client")render()},
   reveal(){send({t:"reveal"})},
   next(){send({t:"next"})},
@@ -443,6 +516,11 @@ const A = {
   }
 };
 $app.addEventListener("click",e=>{const b=e.target.closest("[data-a]");if(b&&!b.disabled&&A[b.dataset.a])A[b.dataset.a](b.dataset)});
+$app.addEventListener("input",e=>{
+  const k={fg:"gossip",fq:"question",fc:"challenge"}[e.target.id];if(!k)return;
+  draft[k]=e.target.value;draft.sent=false;
+  const b=document.getElementById("sb");if(b){b.textContent="Senden";b.disabled=!(draft.gossip.trim()&&draft.question.trim()&&draft.challenge.trim())}
+});
 $app.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="cd")A.join()});
 
 render();
