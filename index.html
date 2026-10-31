@@ -96,31 +96,43 @@ const CATS = {
     "Wer hat am ehesten schon mal geklaut?","Wer hat am ehesten schon mal bei einer Prüfung betrogen?","Wer lügt am häufigsten ohne Grund?","Wer hat am ehesten schon mal jemandem das Herz gebrochen?","Wer würde am ehesten ein Geheimnis für Geld verraten?","Wer hat am ehesten schon mal einen Freund hintergangen?","Wer würde am ehesten einen Unfall verursachen und abhauen?","Wer hat am ehesten schon mal Social Media eines Ex gehackt?","Wer hat am ehesten schon mal was in einem Laden mitgehen lassen?","Wer würde am ehesten ein Erbe zurückhalten?","Wer hat am ehesten schon mal ein Date geghostet?","Wer ist am ehesten ein Gossip-Spion?","Wer würde am ehesten bei einem Streit lügen, um zu gewinnen?","Wer hat das größte schlechte Gewissen in diesem Raum?"]}
 };
 
-/* Gossip-Wheel: Ja/Nein-Fragen über die Person, auf der das Rad landet. */
-const GOSSIP = {
-harmlos:["Hat {n} schon mal im Kino geweint?","Hat {n} schon mal ein Geschenk weiterverschenkt?","Hat {n} schon mal laut im Auto gesungen und wurde dabei gesehen?","Hat {n} schon mal eine ganze Serienstaffel in einer Nacht geschaut?","Hat {n} schon mal einen Termin komplett verschlafen?","Hat {n} schon mal mit einem Haustier wie mit einem Menschen gesprochen?","Hat {n} schon mal absichtlich Nachrichten ungelesen gelassen?","Hat {n} schon mal einen ganzen Tag im Schlafanzug verbracht?"],
-freunde:["Hat {n} schon mal ein Geheimnis eines Freundes weitererzählt?","Hat {n} schon mal eine Einladung nur aus Höflichkeit angenommen?","Hat {n} schon mal einen Freund wegen eines Dates versetzt?","Hat {n} schon mal über jemanden aus dieser Runde gelästert?","Hat {n} schon mal eine Krankheit vorgetäuscht, um ein Treffen abzusagen?","Hat {n} schon mal einen Gruppenchat stummgeschaltet, um Ruhe zu haben?","Hat {n} schon mal ein Geschenk von Freunden heimlich nicht gemocht?","Hat {n} schon mal bei Freunden etwas kaputt gemacht und nichts gesagt?"],
-peinlich:["Hat {n} schon mal die falsche Person per Nachricht angeschrieben?","Hat {n} schon mal beim Flirten völlig versagt?","Hat {n} schon mal einen Fremden mit jemand anderem verwechselt?","Hat {n} schon mal bei einer Präsentation den Faden verloren?","Hat {n} schon mal aus Versehen „Ich dich auch“ gesagt?","Hat {n} schon mal eine Nachricht über jemanden direkt an diese Person geschickt?","Hat {n} schon mal in der Öffentlichkeit gestolpert und so getan, als wäre nichts?","Hat {n} schon mal beim Sport etwas Peinliches erlebt?"],
-party:["Hat {n} schon mal auf einer Party geschlafen?","Hat {n} schon mal den Heimweg nicht mehr gewusst?","Hat {n} schon mal einen Drink über jemanden gekippt?","Hat {n} schon mal vergessen, wie ein Abend endete?","Hat {n} schon mal bei einer Wette mitgemacht und es bereut?","Hat {n} schon mal einen Kater den ganzen Tag im Bett verbracht?","Hat {n} schon mal nachts etwas Absurdes zu essen bestellt?","Hat {n} schon mal auf einer Party jemanden angeflirtet und einen Korb bekommen?"],
-beziehung:["Hat {n} schon mal die Profile eines Ex angeschaut?","Hat {n} schon mal eine Beziehung per Nachricht beendet?","Hat {n} schon mal als Erste:r „Ich liebe dich“ gesagt?","Hat {n} schon mal auf einem Date gelogen?","Hat {n} schon mal einen Ex zurückgenommen?","Hat {n} schon mal heimlich das Handy des Partners durchsucht?","Hat {n} schon mal bei einem Date kaum zugehört?","Hat {n} schon mal einen Korb bekommen?"],
-spicy:["Hat {n} schon mal in der Öffentlichkeit geknutscht?","Hat {n} schon mal jemanden aus dieser Runde attraktiv gefunden?","Hat {n} schon mal nur aus Spaß geflirtet?","Hat {n} schon mal einen Kuss bereut?","Hat {n} schon mal mit jemandem geflirtet, der vergeben war?","Hat {n} schon mal ein Foto verschickt, das besser nicht verschickt worden wäre?","Hat {n} schon mal einen One-Night-Stand gehabt?","Hat {n} schon mal bei einem Trinkspiel Kleidung ausgezogen?"],
-dirty:["Hat {n} schon mal mit jemandem aus dem Freundeskreis geschlafen?","Hat {n} schon mal im Auto Sex gehabt?","Hat {n} schon mal an einem öffentlichen Ort Sex gehabt?","Hat {n} schon mal heimlich Dating-Apps benutzt, obwohl vergeben?","Hat {n} schon mal Spielzeug im Bett benutzt?","Hat {n} schon mal beim Sex den falschen Namen gesagt?","Hat {n} schon mal über einen Dreier nachgedacht?","Hat {n} schon mal von jemandem aus dieser Runde geträumt, und zwar nicht jugendfrei?"],
-alltag:["Hat {n} schon mal krankgemacht, ohne krank zu sein?","Hat {n} schon mal in einer Bewerbung geflunkert?","Hat {n} schon mal einen Kassenfehler zu den eigenen Gunsten nicht gemeldet?","Hat {n} schon mal das Konto überzogen?","Hat {n} schon mal etwas Teures gekauft und sofort bereut?","Hat {n} schon mal im Meeting fast geschlafen?","Hat {n} schon mal den Chef heimlich nachgemacht?","Hat {n} schon mal ernsthaft über eine Kündigung nachgedacht?"],
-wild:["Hat {n} schon mal einen Promi getroffen und sich blamiert?","Hat {n} schon mal etwas Verrücktes für eine Wette getan?","Hat {n} schon mal spontan eine Reise gebucht?","Hat {n} schon mal ein Tattoo oder Piercing spontan stechen lassen?","Hat {n} schon mal bei einer Mutprobe mitgemacht?","Hat {n} schon mal im Ausland die Polizei gebraucht?","Hat {n} schon mal unter falschem Namen etwas bestellt?","Hat {n} schon mal aus Trotz einen ganzen Tag geschwiegen?"],
-dunkel:["Hat {n} schon mal etwas mitgehen lassen?","Hat {n} schon mal bei einer Prüfung gespickt?","Hat {n} schon mal jemanden absichtlich geghostet?","Hat {n} schon mal jemanden angelogen, nur um sich zu schützen?","Hat {n} schon mal einen Freund hintergangen?","Hat {n} schon mal einen Fund behalten, statt ihn abzugeben?","Hat {n} schon mal Rache geplant?","Hat {n} schon mal ein versprochenes Geheimnis verraten?"]
-};
 const MODES = {gossip:"Gossip Wheel", likely:"Wer am ehesten"};
+/* Zufalls-Vorschläge für das Gossip Wheel (Challenge, Frage, Gerücht), pro Kategorie */
 const CHAL = {
-harmlos:["Mach 10 Kniebeugen.","Sprich 1 Minute mit einem Akzent deiner Wahl.","Erzähl einen Witz, bei dem alle lachen müssen.","Imitiere ein Tier, bis jemand es errät.","Sing den Refrain deines Lieblingssongs."],
-freunde:["Mach jeder Person in der Runde ein ehrliches Kompliment.","Lass die Gruppe dein Hintergrundbild kommentieren.","Zeig das letzte Foto in deiner Galerie.","Umarme eine Person deiner Wahl 10 Sekunden lang.","Erzähl eine Geschichte über einen Freund, ohne Namen zu nennen."],
-peinlich:["Tanze 30 Sekunden ohne Musik.","Lies deine letzte Suchanfrage laut vor.","Sprich 2 Minuten nur im Flüsterton.","Zeig dein peinlichstes Foto.","Mach deinen besten Model-Walk durch den Raum."],
-party:["Starte ein Lied deiner Wahl und tanze dazu.","Halte einen Toast auf die Gruppe.","Gib einer Person einen Spitznamen für den Abend.","Erfinde einen Trinkspruch und führe ihn vor.","Trink ein Glas Wasser auf Ex."],
-beziehung:["Lies die letzte Nachricht an deinen Schwarm vor, oder erfinde eine.","Schreib eine Liebeserklärung an einen Gegenstand im Raum.","Spiele das erste Date nach.","Gib der Runde einen Dating-Tipp.","Erzähl von deinem schlimmsten Date."],
-spicy:["Flirte 30 Sekunden mit einem Gegenstand.","Gib einer Person ein Kompliment zu ihrem Aussehen.","Verrate deinen größten Turn-on in einem Wort.","Sag etwas Gewagtes ins Ohr einer Person deiner Wahl.","Küss deinen Handrücken wie im Film."],
-dirty:["Beschreibe dein perfektes Date in 3 Sätzen.","Verrate dein verrücktestes Date.","Beichte etwas oder trink.","Sag, wen aus der Runde du am ehesten küssen würdest.","Erzähl dein peinlichstes Erlebnis im Schlafzimmer."],
-alltag:["Halte 30 Sekunden eine Rede, warum du befördert werden solltest.","Verkaufe der Runde einen Stift in 30 Sekunden.","Erzähl deinen Plan für die nächsten 10 Jahre.","Imitiere deinen Chef.","Schreib deine Kündigung in einem Satz."],
-wild:["Mach 20 Sekunden lang Planking.","Erfinde einen Werbespot für einen Gegenstand im Raum.","Spiele eine Filmszene ohne Worte.","Lauf wie ein Roboter einmal durch den Raum.","Mach ein Selfie mit deiner verrücktesten Grimasse und zeig es."],
-dunkel:["Beichte eine kleine Lüge, die du erzählt hast.","Verrate ein Geheimnis, das niemand hier kennt.","Sag, wen du hier für den größten Lügner hältst.","Erzähl von einer Sache, die du bereust.","Verrate, was du schon mal über jemanden hier gesagt hast."]
+harmlos:["Imitiere eine Person aus der Runde, bis sie errät, wer es ist.","Sing ein Lied deiner Wahl komplett vor, ohne Musik.","Rede 1 Minute lang nur in Fragen.","Mach 20 Kniebeugen, während alle mitzählen."],
+freunde:["Verrate, welche Person hier du am wenigsten gut kennst, und warum.","Lass die Runde 30 Sekunden durch deine Fotogalerie scrollen.","Schreib einer Person aus der Runde jetzt eine Liebeserklärung.","Gib jeder Person hier laut eine ehrliche Note von 1 bis 10."],
+peinlich:["Zeig deine peinlichste Suchanfrage der letzten Woche.","Lies deine letzte Sprachnachricht laut vor.","Tanze 1 Minute lang so peinlich wie möglich.","Ruf einen Kontakt an und sing ihm Happy Birthday."],
+party:["Exe ein Getränk deiner Wahl.","Verteile 5 Schlücke an beliebige Personen.","Trink 5 Schlücke, ohne abzusetzen.","Starte eine Polonaise durch die Wohnung."],
+beziehung:["Lies deine letzte Nachricht an deinen Ex oder Schwarm laut vor.","Zeig das letzte Foto von deinem Ex, oder trink 5 Schlücke.","Schick deinem Schwarm jetzt ein Herz-Emoji.","Beschreibe deinen Ex in drei Wörtern."],
+spicy:["Mach der Person deiner Wahl ein Kompliment, das sie rot werden lässt.","Flüstere der Person deiner Wahl etwas Schmutziges ins Ohr.","Verrate deinen größten Turn-on und deinen größten Turn-off.","Spiele 30 Sekunden lang den Flirt-Profi bei einer Person deiner Wahl."],
+dirty:["Beichte dein verrücktestes Date.","Verrate, mit wie vielen Personen du geschlafen hast, oder trink 5 Schlücke.","Erzähl dein peinlichstes Erlebnis im Bett.","Sag, mit wem hier du am ehesten durchbrennen würdest."],
+alltag:["Zeig deinen Kontostand, oder trink 5 Schlücke.","Lies deine letzte Arbeits-Mail laut vor.","Verrate dein Gehalt, oder trink 5 Schlücke.","Erzähl, wen im Job du am liebsten feuern würdest."],
+wild:["Mach ein Selfie mit der peinlichsten Grimasse und schick es an die Gruppe.","Sprich 3 Minuten lang nur in Reimen.","Lass die Gruppe 30 Sekunden deine Galerie durchsehen.","Ruf eine zufällige Nummer aus deinen Kontakten an und sag nur: „Ich weiß, was du getan hast.“"],
+dunkel:["Beichte deine größte Lüge.","Verrate, was du über eine Person hier schon mal hinter ihrem Rücken gesagt hast.","Erzähl ein Geheimnis, das niemand hier kennt.","Nenne die Person hier, der du am wenigsten traust."]
+};
+const QS = {
+harmlos:["Was ist das Peinlichste, das dir diese Woche passiert ist?","Welche Lüge erzählst du am häufigsten?","Welche Person hier würdest du als Letzte um Hilfe bitten?","Was machst du heimlich, wenn niemand zuschaut?"],
+freunde:["Welche Person hier nervt dich am meisten, und warum?","Wen aus der Runde würdest du aus der Gruppe werfen?","Über wen in dieser Runde hast du zuletzt gelästert?","Wem hier vertraust du am wenigsten?"],
+peinlich:["Was war dein peinlichster Moment auf einer Party?","Was hast du zuletzt heimlich gegoogelt?","Was ist dein peinlichstes Guilty Pleasure?","Wann wolltest du zuletzt im Boden versinken?"],
+party:["Was war dein größter Absturz?","Mit wem hier hast du am meisten getrunken, und was ist passiert?","Welche Person hier tanzt am schlechtesten?","Was war das Verrückteste, das du betrunken getan hast?"],
+beziehung:["Wen hier hast du schon mal attraktiv gefunden?","Was war dein schlimmster Fehler in einer Beziehung?","Hast du schon mal jemanden betrogen oder wurdest betrogen?","Welchen Ex würdest du sofort zurücknehmen?"],
+spicy:["Wen hier würdest du küssen, wenn du müsstest?","Was war dein heißester Moment?","Wie viele Personen hast du geküsst? Ehrlich.","Was turnt dich bei anderen am meisten an?"],
+dirty:["Was ist deine verrückteste Fantasie?","Wo hattest du den gewagtesten Sex?","Von wem hier hast du schon mal geträumt, und was war los?","Was war dein peinlichster Moment im Bett?"],
+alltag:["Was würdest du tun, wenn du morgen eine Million hättest?","Wen im Job kannst du nicht ausstehen?","Hast du im Job schon mal gelogen, um Ärger zu vermeiden?","Was ist deine größte Geldsünde?"],
+wild:["Was war das Illegalste, das du je getan hast?","Was würdest du an einem Tag als Unsichtbare:r tun?","Wer hier würde im Knast am besten überleben?","Was war dein verrücktester Impulskauf?"],
+dunkel:["Was bereust du am meisten?","Welche Person hier hast du schon mal angelogen, und worüber?","Was hast du getan, von dem niemand wissen darf?","Wem hast du schon mal etwas Gemeines gesagt, das du bereust?"]
+};
+const RUM = {
+harmlos:["{n} singt heimlich unter der Dusche Schlager.","{n} hat noch nie ein ganzes Buch gelesen.","{n} stalkt regelmäßig Profile von Fremden.","{n} hat Angst vor Spinnen und tut so, als nicht."],
+freunde:["{n} lästert hinter unserem Rücken am meisten über uns.","{n} hat schon mal ein Geheimnis von uns weitererzählt.","{n} findet eine Person hier heimlich unausstehlich.","{n} hat schon mal aus Eifersucht eine Freundschaft sabotiert."],
+peinlich:["{n} hat sich als Erwachsene:r schon mal in die Hose gemacht.","{n} hat schon mal im Bett den falschen Namen gesagt.","{n} googelt sich regelmäßig selbst.","{n} hat einen peinlichen Spitznamen in der Familie."],
+party:["{n} ist schon mal in einem fremden Bett aufgewacht.","{n} hat schon mal auf einer Party das Bad verwüstet.","{n} hat schon mal betrunken den Ex angerufen.","{n} wurde schon mal aus einem Club geworfen."],
+beziehung:["{n} stalkt immer noch den Ex.","{n} hat schon mal bei einem Date mit jemand anderem geschrieben.","{n} war schon mal in eine Person aus dieser Runde verknallt.","{n} hat schon mal eine Beziehung nur aus Mitleid geführt."],
+spicy:["{n} hat schon mal jemanden aus dieser Runde geküsst.","{n} hat schon mal ein heißes Foto an die falsche Person geschickt.","{n} hat schon mal mit einem vergebenen Menschen geflirtet.","{n} hat eine geheime Affäre."],
+dirty:["{n} hatte schon mal Sex an einem öffentlichen Ort.","{n} hat schon mal mit dem Ex eines Freundes geschlafen.","{n} hat Spielzeug in der Nachttischschublade.","{n} hat schon mal bei einem Dreier mitgemacht."],
+alltag:["{n} hat im Job schon mal Büromaterial mitgehen lassen.","{n} hat sich schon mal krankgemeldet, um zu feiern.","{n} ist heimlich hoch verschuldet.","{n} hat schon mal den Chef angebaggert."],
+wild:["{n} war im Ausland schon mal kurz vor einer Verhaftung.","{n} hat bei einer Wette schon mal etwas Illegales getan.","{n} führt heimlich ein zweites Leben im Internet.","{n} würde für Geld fast alles tun."],
+dunkel:["{n} hat schon mal etwas Wertvolles gestohlen.","{n} hat schon mal einen Freund hintergangen.","{n} hat ein Geheimnis, das alles verändern würde.","{n} hat schon mal eine Lüge erzählt, die jemandem richtig geschadet hat."]
 };
 const pick = a => a[Math.floor(Math.random()*a.length)];
 
@@ -151,7 +163,7 @@ function hostRoom(name){
   const code=genCode();
   const p=new Peer("exposed-"+code,OPTS);peer=p;
   p.on("open",()=>{
-    S={code,hostPid:pid,phase:"lobby",players:[{id:pid,name,online:true}],mode:"gossip",cats:Object.keys(CATS),rounds:10,passes:1,pass:0,round:null,card:null,answered:[],reveal:null};
+    S={code,hostPid:pid,phase:"lobby",players:[{id:pid,name,online:true}],mode:"gossip",cats:Object.keys(CATS),rounds:10,passes:1,pass:0,nsub:0,round:null,card:null,answered:[],reveal:null};
     H={answers:{},pool:[],idx:0,timer:null,subs:{},cards:[],ci:0};
     status="";bc();
   });
@@ -226,10 +238,12 @@ function act(p,d){
       if(host&&S.phase==="reveal")nextRound();break;
     case "sub":{
       if(S.phase!=="write")return;
-      const g=clip(d.gossip),q=clip(d.question),c=clip(d.challenge);
-      if(d.target===p||!S.players.some(x=>x.id===d.target)||!g||!q||!c)return;
-      H.subs[p]={target:d.target,gossip:g,question:q,challenge:c};
-      S.answered=Object.keys(H.subs);checkSubs();bc();break}
+      const k=d.kind,tx=clip(d.text);
+      if(!["challenge","question","gossip"].includes(k)||d.target===p||!S.players.some(x=>x.id===d.target)||!tx)return;
+      (H.subs[p]=H.subs[p]||{})[k]={target:d.target,text:tx};
+      S.nsub=Object.values(H.subs).reduce((n,s)=>n+Object.keys(s).length,0);
+      S.answered=Object.keys(H.subs).filter(id=>{const s=H.subs[id];return s.challenge&&s.question&&s.gossip});
+      checkSubs();bc();break}
     case "go":
       if(host&&S.phase==="write")startCards();break;
     case "gnext":
@@ -250,18 +264,21 @@ function startGame(){
 }
 /* Gossip Wheel: alle schreiben, dann werden die Karten nacheinander aufgedeckt */
 function startWrite(){
-  H.subs={};H.pending=false;S.answered=[];S.card=null;S.phase="write";bc();
+  H.subs={};H.pending=false;S.answered=[];S.nsub=0;S.card=null;S.phase="write";bc();
 }
 function checkSubs(){
   if(S.phase!=="write"||H.pending)return;
   const req=required();
-  if(req.length&&req.every(id=>id in H.subs)){
+  if(req.length&&req.every(id=>S.answered.includes(id))){
     H.pending=true;
     setTimeout(()=>{H.pending=false;if(S.phase==="write")startCards()},1200);
   }
 }
 function startCards(){
-  const cs=Object.values(H.subs).filter(s=>S.players.some(x=>x.id===s.target));
+  const cs=[];
+  Object.values(H.subs).forEach(s=>Object.keys(s).forEach(k=>{
+    if(S.players.some(x=>x.id===s[k].target))cs.push({kind:k,target:s[k].target,text:s[k].text});
+  }));
   if(!cs.length)return;
   H.cards=shuffle(cs);H.ci=-1;cardAdvance();
 }
@@ -274,7 +291,7 @@ function cardAdvance(){
   }
   const c=H.cards[H.ci];
   S.phase="card";
-  S.card={i:H.ci,n:H.cards.length,pass:S.pass,target:c.target,gossip:c.gossip,question:c.question,challenge:c.challenge};
+  S.card={i:H.ci,n:H.cards.length,pass:S.pass,target:c.target,kind:c.kind,text:c.text};
   S.answered=[];bc();
 }
 /* Wer am ehesten */
@@ -340,7 +357,7 @@ function vLobby(){
     ${on<3?`<p class="mut" style="margin-top:10px;font-size:14px">Mindestens 3 Spieler nötig.</p>`:""}</div>`;
   if(h){
     h2+=`<div class="card stack"><h2>Modus</h2><div class="seg">${Object.entries(MODES).map(([k,n])=>`<button class="${S.mode===k?"on":""}" data-a="mode" data-v="${k}">${n}</button>`).join("")}</div>
-    <p class="mut" style="font-size:14px">${S.mode==="gossip"?"Alle schreiben gleichzeitig: Person antippen, anonym Gossip, Frage und Challenge. Danach wird Karte für Karte aufgedeckt, der Host drückt Weiter. Wer nicht ehrlich antwortet oder die Challenge nicht macht, trinkt.":"Alle wählen geheim, wer am ehesten zur Frage passt. Wer am häufigsten gewählt wird, trinkt."}</p>
+    <p class="mut" style="font-size:14px">${S.mode==="gossip"?"Alle schreiben gleichzeitig: erst eine Person wählen und ihr eine Challenge geben, dann eine Frage, dann ein Gerücht. Danach wird Karte für Karte aufgedeckt (ohne Absender), der Host drückt Weiter. Wer nicht ehrlich antwortet oder die Challenge nicht macht, trinkt.":"Alle wählen geheim, wer am ehesten zur Frage passt. Wer am häufigsten gewählt wird, trinkt."}</p>
     ${S.mode==="gossip"?`<h2 style="margin-top:6px">Durchgänge</h2><div class="seg">${[1,2,3].map(n=>`<button class="${S.passes===n?"on":""}" data-a="passes" data-v="${n}">${n}</button>`).join("")}</div>`:`<h2 style="margin-top:6px">Runden</h2><div class="seg">${[5,10,15,20,30].map(n=>`<button class="${S.rounds===n?"on":""}" data-a="rounds" data-v="${n}">${n}</button>`).join("")}</div>`}</div>
     <div class="card stack"><h2>Kategorien</h2>${Object.entries(CATS).map(([k,c])=>`<button class="opt ${S.cats.includes(k)?"on":""}" data-a="cat" data-v="${k}"><span>${esc(c.n)}<br><small>${esc(c.d)}</small></span><span>${S.cats.includes(k)?"✓":""}</span></button>`).join("")}
       <div class="row"><button class="btn sec" data-a="allcats">Alle</button><button class="btn sec" data-a="nocats">Keine</button></div></div>
@@ -356,41 +373,39 @@ function rhead(){
   return `${header()}<div class="prog"><i style="width:${r.idx/S.total*100}%"></i></div>
   <div class="tag">Runde ${r.idx+1} / ${S.total} · ${esc(CATS[r.cat].n)} · Wer am ehesten</div>`;
 }
+const KINDS=[{k:"challenge",n:"Challenge",f:"Aufgabe für"},{k:"question",n:"Frage",f:"Frage an"},{k:"gossip",n:"Gerücht",f:"Gerücht über"}];
+const KCARD={challenge:{l:"Challenge für",r:"Machen oder trinken."},question:{l:"Frage an",r:"Ehrlich antworten oder trinken."},gossip:{l:"Gerücht über",r:"Stimmt es? Ehrlich sagen oder trinken."}};
 let draft={key:""};
-function newDraft(key){return {key,target:null,gossip:"",question:"",challenge:"",sent:false}}
+function newDraft(key){return {key,stage:0,target:null,text:""}}
 function wstText(){
   const req=required(),got=S.answered.filter(id=>req.includes(id)).length;
-  return {got,txt:`${draft.sent?"Gesendet. ":""}${got} / ${req.length} fertig`};
+  return {got,txt:`${got} / ${req.length} fertig`};
 }
 function vWrite(){
   const key=S.code+S.pass;if(draft.key!==key)draft=newDraft(key);
-  const others=S.players.filter(p=>p.id!==pid),n=others.length,w=wstText();
+  const w=wstText(),tag=`<div class="tag">Gossip Wheel${S.passes>1?` · Durchgang ${S.pass+1} / ${S.passes}`:""}</div>`;
+  const foot=`<p class="c mut" id="wst" style="font-size:14px">${w.txt}</p>
+  ${isHost()?`<button class="btn sec" id="gob" data-a="go" ${S.nsub?"":"disabled"}>Weiter zu den Karten</button>`:""}`;
+  if(draft.stage>=3)return `${header()}${tag}<div class="grow stack" style="justify-content:center"><div class="card c"><p style="font-size:20px;font-weight:700">Fertig</p><p class="mut" style="font-size:14px">Warte auf die anderen …</p></div></div>${foot}`;
+  const K=KINDS[draft.stage],others=S.players.filter(p=>p.id!==pid),n=others.length;
   const t=others.find(p=>p.id===draft.target);
   const ring=others.map((p,i)=>{
     const a=2*Math.PI*i/n-Math.PI/2,nm=p.name.length>9?p.name.slice(0,8)+"…":p.name;
     return `<button class="av ${p.id===draft.target?"on":""}" data-a="pick" data-v="${esc(p.id)}" style="left:${(50+39*Math.cos(a)).toFixed(1)}%;top:${(50+39*Math.sin(a)).toFixed(1)}%"><i>${esc(p.name[0].toUpperCase())}</i><span>${esc(nm)}</span></button>`;
   }).join("");
-  const form=t?`<div class="card stack"><h2>Für ${esc(t.name)}</h2>
-    <div><label>Gossip (anonym)</label><textarea id="fg" maxlength="140" placeholder="Schreib ein Gerücht oder eine Beobachtung …">${esc(draft.gossip)}</textarea></div>
-    <div><label>Frage</label><div class="row" style="align-items:stretch"><input type="text" id="fq" maxlength="140" value="${esc(draft.question)}" placeholder="Frage an ${esc(t.name)}"><button class="btn sec" data-a="fillq" style="width:86px;flex:none;padding:8px">Zufall</button></div></div>
-    <div><label>Challenge</label><div class="row" style="align-items:stretch"><input type="text" id="fc" maxlength="140" value="${esc(draft.challenge)}" placeholder="Aufgabe für ${esc(t.name)}"><button class="btn sec" data-a="fillc" style="width:86px;flex:none;padding:8px">Zufall</button></div></div>
-    <button class="btn" id="sb" data-a="sendsub" ${draft.gossip.trim()&&draft.question.trim()&&draft.challenge.trim()?"":"disabled"}>${draft.sent?"Aktualisieren":"Senden"}</button></div>`
-    :`<p class="c mut">Tippe auf eine Person und gib ihr Gossip, eine Frage und eine Challenge.</p>`;
-  return `${header()}<div class="tag">Gossip Wheel${S.passes>1?` · Durchgang ${S.pass+1} / ${S.passes}`:""}</div>
-  <div class="ring"><div class="mid">Du<br>wählst</div>${ring}</div>${form}
-  <p class="c mut" id="wst" style="font-size:14px">${w.txt}</p>
-  ${isHost()?`<button class="btn sec" id="gob" data-a="go" ${w.got?"":"disabled"}>Weiter zu den Karten</button>`:""}`;
+  const form=t?`<div class="card stack"><h2>${K.f} ${esc(t.name)}</h2>
+    <textarea id="ft" maxlength="140" placeholder="${K.n} schreiben …">${esc(draft.text)}</textarea>
+    <div class="row"><button class="btn sec" data-a="fill">Zufall</button><button class="btn" id="sb" data-a="sendsub" ${draft.text.trim()?"":"disabled"}>Senden</button></div></div>`
+    :`<p class="c mut">Tippe auf eine Person.</p>`;
+  return `${header()}${tag}<div class="tag" style="color:var(--text)">Schritt ${draft.stage+1} / 3 · ${K.n}</div>
+  <div class="ring"><div class="mid">Wer?</div>${ring}</div>${form}${foot}`;
 }
 function vCard(){
-  const c=S.card,tg=c.target===pid,name=esc(pname(c.target)),who=tg?"du":name;
+  const c=S.card,tg=c.target===pid,K=KCARD[c.kind];
   const last=c.i+1>=c.n;
   return `${header()}<div class="tag">Gossip Wheel · Karte ${c.i+1} / ${c.n}${S.passes>1?` · Durchgang ${c.pass+1} / ${S.passes}`:""}</div>
-  <div class="card c"><p class="mut" style="font-size:13px">Es geht um</p><p style="font-size:34px;font-weight:700">${tg?"dich":name}</p></div>
-  <div class="stack">
-    <div class="blk"><label>Gossip</label><p>${esc(c.gossip)}</p><p class="mut" style="font-size:14px;font-weight:400;margin-top:4px">Stimmt es? ${tg?"Du":name} sagt es ehrlich, sonst trinkt ${tg?"du":name}.</p></div>
-    <div class="blk"><label>Frage an ${who}</label><p>${esc(c.question)}</p><p class="mut" style="font-size:14px;font-weight:400;margin-top:4px">Ehrlich antworten oder trinken.</p></div>
-    <div class="blk"><label>Challenge für ${who}</label><p>${esc(c.challenge)}</p><p class="mut" style="font-size:14px;font-weight:400;margin-top:4px">Machen oder trinken.</p></div>
-  </div>
+  <div class="card c"><p class="mut" style="font-size:13px">${K.l}</p><p style="font-size:34px;font-weight:700">${tg?"dich":esc(pname(c.target))}</p></div>
+  <div class="blk"><label>${KINDS.find(x=>x.k===c.kind).n} · anonym</label><p>${esc(c.text)}</p><p class="mut" style="font-size:14px;font-weight:400;margin-top:4px">${K.r}</p></div>
   <div class="grow"></div>
   ${isHost()?`<button class="btn" data-a="gnext">${last?(S.pass+1<S.passes?"Nächster Durchgang":"Fertig"):"Weiter"}</button>`:`<p class="mut c">Warte auf ${esc(pname(S.hostPid))} …</p>`}`;
 }
@@ -420,7 +435,7 @@ function vEnd(){
 function render(force){
   if(!force&&S&&S.phase==="write"&&render.w===S.code+S.pass&&document.getElementById("wst")){
     const w=wstText();document.getElementById("wst").textContent=w.txt;
-    const g=document.getElementById("gob");if(g)g.disabled=!w.got;
+    const g=document.getElementById("gob");if(g)g.disabled=!S.nsub;
     return;
   }
   let html;
@@ -459,10 +474,15 @@ const A = {
   nocats(){send({t:"set",mode:S.mode,cats:[],rounds:S.rounds})},
   passes(d){send({t:"set",mode:S.mode,cats:S.cats,rounds:S.rounds,passes:+d.v})},
   start(){send({t:"start"})},
-  pick(d){draft.target=d.v;draft.sent=false;render(true)},
-  fillq(){const k=pick(S.cats);draft.question=pick(GOSSIP[k]).replace("Hat {n}","Hast du");draft.sent=false;render(true)},
-  fillc(){draft.challenge=pick(CHAL[pick(S.cats)]);draft.sent=false;render(true)},
-  sendsub(){if(!draft.target)return;send({t:"sub",target:draft.target,gossip:draft.gossip,question:draft.question,challenge:draft.challenge});draft.sent=true;render(true)},
+  pick(d){draft.target=d.v;render(true)},
+  fill(){
+    const K=KINDS[draft.stage],k=pick(S.cats),nm=draft.target?pname(draft.target):"";
+    draft.text=K.k==="challenge"?pick(CHAL[k]):K.k==="question"?pick(QS[k]):pick(RUM[k]).replace("{n}",nm);
+    render(true)},
+  sendsub(){
+    if(!draft.target||!draft.text.trim())return;
+    send({t:"sub",kind:KINDS[draft.stage].k,target:draft.target,text:draft.text});
+    draft.stage++;draft.target=null;draft.text="";render(true)},
   go(){send({t:"go"})},
   gnext(){send({t:"gnext"})},
   ans(d){mine=d.v;send({t:"ans",v:d.v});if(role==="client")render()},
@@ -477,9 +497,9 @@ const A = {
 };
 $app.addEventListener("click",e=>{const b=e.target.closest("[data-a]");if(b&&!b.disabled&&A[b.dataset.a])A[b.dataset.a](b.dataset)});
 $app.addEventListener("input",e=>{
-  const k={fg:"gossip",fq:"question",fc:"challenge"}[e.target.id];if(!k)return;
-  draft[k]=e.target.value;draft.sent=false;
-  const b=document.getElementById("sb");if(b){b.textContent="Senden";b.disabled=!(draft.gossip.trim()&&draft.question.trim()&&draft.challenge.trim())}
+  if(e.target.id!=="ft")return;
+  draft.text=e.target.value;
+  const b=document.getElementById("sb");if(b)b.disabled=!draft.text.trim();
 });
 $app.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="cd")A.join()});
 
