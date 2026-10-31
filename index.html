@@ -151,8 +151,8 @@ function hostRoom(name){
   const code=genCode();
   const p=new Peer("exposed-"+code,OPTS);peer=p;
   p.on("open",()=>{
-    S={code,hostPid:pid,phase:"lobby",players:[{id:pid,name,online:true,score:0}],mode:"gossip",cats:Object.keys(CATS),rounds:10,passes:1,pass:0,round:null,card:null,answered:[],reveal:null};
-    H={answers:{},pool:[],idx:0,timer:null,subs:{},cards:[],ci:0,react:{},judge:{},cr:null,cj:null};
+    S={code,hostPid:pid,phase:"lobby",players:[{id:pid,name,online:true}],mode:"gossip",cats:Object.keys(CATS),rounds:10,passes:1,pass:0,round:null,card:null,answered:[],reveal:null};
+    H={answers:{},pool:[],idx:0,timer:null,subs:{},cards:[],ci:0};
     status="";bc();
   });
   p.on("connection",c=>{
@@ -183,7 +183,7 @@ function join(c,d){
     if(S.phase!=="lobby"){c.send({t:"err",m:"Das Spiel läuft schon. Warte auf die nächste Runde."});return}
     if(S.players.length>=12){c.send({t:"err",m:"Der Raum ist voll (12 Spieler)."});return}
     if(S.players.some(x=>x.name.toLowerCase()===name.toLowerCase())){c.send({t:"err",m:"Dieser Name ist im Raum schon vergeben."});return}
-    pl={id,name,online:true,score:0};S.players.push(pl);
+    pl={id,name,online:true};S.players.push(pl);
   }
   if(conns[id]&&conns[id]!==c){try{conns[id]._pid=null;conns[id].close()}catch(e){}}
   pl.online=true;c._pid=id;conns[id]=c;bc();
@@ -232,22 +232,16 @@ function act(p,d){
       S.answered=Object.keys(H.subs);checkSubs();bc();break}
     case "go":
       if(host&&S.phase==="write")startCards();break;
-    case "gv":{
-      if(S.phase!=="card"||p===S.card.target)return;
-      if(S.card.step===0&&(d.v==="stimmt"||d.v==="quatsch"))H.react[p]=d.v;
-      else if(S.card.step===2&&(d.v==="ok"||d.v==="no"))H.judge[p]=d.v;
-      else return;
-      S.answered=Object.keys(S.card.step===0?H.react:H.judge);bc();break}
     case "gnext":
-      if(host&&S.phase==="card")cardNext();break;
+      if(host&&S.phase==="card")cardAdvance();break;
     case "again":
-      if(host&&S.phase==="end"){clearTimeout(H.timer);S.phase="lobby";S.round=null;S.card=null;S.reveal=null;S.answered=[];S.players=S.players.filter(x=>x.online);S.players.forEach(x=>x.score=0);bc()}break;
+      if(host&&S.phase==="end"){clearTimeout(H.timer);S.phase="lobby";S.round=null;S.card=null;S.reveal=null;S.answered=[];S.players=S.players.filter(x=>x.online);bc()}break;
   }
 }
 function startGame(){
   const on=S.players.filter(p=>p.online);
   if(on.length<3||!S.cats.length)return;
-  S.players=on;S.players.forEach(p=>p.score=0);
+  S.players=on;
   if(S.mode==="gossip"){S.pass=0;return startWrite()}
   const pool=[];
   S.cats.forEach(k=>CATS[k].q.forEach(q=>pool.push({cat:k,text:q})));
@@ -272,36 +266,16 @@ function startCards(){
   H.cards=shuffle(cs);H.ci=-1;cardAdvance();
 }
 function cardAdvance(){
-  H.ci++;H.react={};H.judge={};H.cr=null;H.cj=null;
+  H.ci++;
   if(H.ci>=H.cards.length){
     S.pass++;
     if(S.pass<S.passes)return startWrite();
     S.phase="end";S.card=null;S.answered=[];return bc();
   }
-  S.phase="card";cardView(0);
-}
-function cardView(step){
-  const c=H.cards[H.ci],o={i:H.ci,n:H.cards.length,pass:S.pass,target:c.target,step,gossip:c.gossip};
-  if(step>=1){o.question=c.question;o.react=H.cr}
-  if(step>=2)o.challenge=c.challenge;
-  if(step>=3)o.judge=H.cj;
-  S.card=o;S.answered=[];bc();
-}
-function cardNext(){
-  const c=H.cards[H.ci],st=S.card.step;
-  if(st===0){
-    const v=Object.values(H.react);
-    H.cr={s:v.filter(x=>x==="stimmt").length,q:v.filter(x=>x==="quatsch").length};
-    return cardView(1);
-  }
-  if(st===1)return cardView(2);
-  if(st===2){
-    const v=Object.values(H.judge),ok=v.filter(x=>x==="ok").length,no=v.filter(x=>x==="no").length;
-    H.cj={ok,no,pt:ok>no};
-    if(H.cj.pt)score(c.target,1);
-    return cardView(3);
-  }
-  cardAdvance();
+  const c=H.cards[H.ci];
+  S.phase="card";
+  S.card={i:H.ci,n:H.cards.length,pass:S.pass,target:c.target,gossip:c.gossip,question:c.question,challenge:c.challenge};
+  S.answered=[];bc();
 }
 /* Wer am ehesten */
 function nextRound(){
@@ -310,13 +284,11 @@ function nextRound(){
   const it=H.pool[H.idx];
   S.round={idx:H.idx,type:"likely",cat:it.cat,text:it.text};S.phase="answer";bc();
 }
-function score(id,n){const p=S.players.find(x=>x.id===id);if(p)p.score+=n}
 function doReveal(){
   const ans=H.answers,counts={};
   Object.values(ans).forEach(v=>{if(S.players.some(x=>x.id===v))counts[v]=(counts[v]||0)+1});
   const max=Math.max(0,...Object.values(counts));
   const winners=max?Object.keys(counts).filter(k=>counts[k]===max):[];
-  winners.forEach(id=>score(id,1));
   S.reveal={counts,winners};S.phase="reveal";bc();
 }
 
@@ -349,10 +321,6 @@ const isHost = () => S&&S.hostPid===pid;
 function header(){
   return `<header><b>EXPOSED</b><span>${S?`Raum ${esc(S.code)} · `:""}<button class="link" data-a="leave">Verlassen</button></span></header>`;
 }
-function board(){
-  const rows=S.players.slice().sort((a,b)=>b.score-a.score);
-  return rows.map(p=>`<div class="sc"><span>${esc(p.name)}${p.id===pid?" (du)":""}</span><b>${p.score}</b></div>`).join("");
-}
 function vHome(){
   const q=new URLSearchParams(location.search).get("r")||"";
   return `<h1>Exposed</h1><p class="mut">Gossip-Partyspiel für die Gruppe. Jeder spielt auf dem eigenen Handy.</p>
@@ -372,7 +340,7 @@ function vLobby(){
     ${on<3?`<p class="mut" style="margin-top:10px;font-size:14px">Mindestens 3 Spieler nötig.</p>`:""}</div>`;
   if(h){
     h2+=`<div class="card stack"><h2>Modus</h2><div class="seg">${Object.entries(MODES).map(([k,n])=>`<button class="${S.mode===k?"on":""}" data-a="mode" data-v="${k}">${n}</button>`).join("")}</div>
-    <p class="mut" style="font-size:14px">${S.mode==="gossip"?"Jeder tippt eine Person an und schreibt anonym Gossip, eine Frage und eine Challenge. Danach werden die Karten aufgedeckt.":"Alle wählen geheim, wer am ehesten zur Frage passt."}</p>
+    <p class="mut" style="font-size:14px">${S.mode==="gossip"?"Alle schreiben gleichzeitig: Person antippen, anonym Gossip, Frage und Challenge. Danach wird Karte für Karte aufgedeckt, der Host drückt Weiter. Wer nicht ehrlich antwortet oder die Challenge nicht macht, trinkt.":"Alle wählen geheim, wer am ehesten zur Frage passt. Wer am häufigsten gewählt wird, trinkt."}</p>
     ${S.mode==="gossip"?`<h2 style="margin-top:6px">Durchgänge</h2><div class="seg">${[1,2,3].map(n=>`<button class="${S.passes===n?"on":""}" data-a="passes" data-v="${n}">${n}</button>`).join("")}</div>`:`<h2 style="margin-top:6px">Runden</h2><div class="seg">${[5,10,15,20,30].map(n=>`<button class="${S.rounds===n?"on":""}" data-a="rounds" data-v="${n}">${n}</button>`).join("")}</div>`}</div>
     <div class="card stack"><h2>Kategorien</h2>${Object.entries(CATS).map(([k,c])=>`<button class="opt ${S.cats.includes(k)?"on":""}" data-a="cat" data-v="${k}"><span>${esc(c.n)}<br><small>${esc(c.d)}</small></span><span>${S.cats.includes(k)?"✓":""}</span></button>`).join("")}
       <div class="row"><button class="btn sec" data-a="allcats">Alle</button><button class="btn sec" data-a="nocats">Keine</button></div></div>
@@ -414,22 +382,17 @@ function vWrite(){
   ${isHost()?`<button class="btn sec" id="gob" data-a="go" ${w.got?"":"disabled"}>Weiter zu den Karten</button>`:""}`;
 }
 function vCard(){
-  const c=S.card,tg=c.target===pid,name=esc(pname(c.target));
-  const nv=S.players.filter(p=>p.online&&p.id!==c.target).length,got=S.answered.length;
-  let h=`${header()}<div class="tag">Gossip Wheel · Karte ${c.i+1} / ${c.n}${S.passes>1?` · Durchgang ${c.pass+1} / ${S.passes}`:""}</div>
-  <div class="card c"><p class="mut" style="font-size:13px">Es geht um</p><p style="font-size:30px;font-weight:700">${tg?"dich":name}</p></div><div class="stack">
-  <div class="blk"><label>Gossip</label><p>${esc(c.gossip)}</p></div>`;
-  const btns=(a,b)=>`<div class="grid">${[a,b].map(([v,l])=>`<button class="opt big ${mine===v?"on":""}" data-a="gv" data-v="${v}">${l}</button>`).join("")}</div><p class="c mut" style="font-size:14px">${got} / ${nv} haben abgestimmt</p>`;
-  if(c.step===0)h+=tg?`<p class="mut c">Die anderen reagieren gerade …</p>`:btns(["stimmt","Stimmt"],["quatsch","Quatsch"]);
-  if(c.step>=1)h+=`<p class="mut" style="font-size:14px">Reaktionen: ${c.react.s}× Stimmt · ${c.react.q}× Quatsch</p>
-    <div class="blk"><label>Frage an ${tg?"dich":name}</label><p>${esc(c.question)}</p></div>`;
-  if(c.step>=2)h+=`<div class="blk"><label>Challenge für ${tg?"dich":name}</label><p>${esc(c.challenge)}</p></div>`;
-  if(c.step===2)h+=tg?`<p class="mut c">Führe die Challenge aus. Die anderen entscheiden.</p>`:btns(["ok","Geschafft"],["no","Gepasst"]);
-  if(c.step>=3)h+=`<div class="card c"><p style="font-size:20px;font-weight:700">${c.judge.pt?"Geschafft · +1 Punkt":"Nicht geschafft"}</p><p class="mut" style="font-size:14px">${c.judge.ok} : ${c.judge.no}</p></div><div class="card"><h2>Punktestand</h2>${board()}</div>`;
-  h+=`</div>`;
-  const lbl=["Frage zeigen","Challenge zeigen","Auflösen",c.i+1>=c.n?(S.pass+1<S.passes?"Nächster Durchgang":"Ergebnis"):"Nächste Karte"][c.step];
-  h+=isHost()?`<button class="btn" data-a="gnext">${lbl}</button>`:`<p class="mut c">${esc(pname(S.hostPid))} steuert die Karten.</p>`;
-  return h;
+  const c=S.card,tg=c.target===pid,name=esc(pname(c.target)),who=tg?"du":name;
+  const last=c.i+1>=c.n;
+  return `${header()}<div class="tag">Gossip Wheel · Karte ${c.i+1} / ${c.n}${S.passes>1?` · Durchgang ${c.pass+1} / ${S.passes}`:""}</div>
+  <div class="card c"><p class="mut" style="font-size:13px">Es geht um</p><p style="font-size:34px;font-weight:700">${tg?"dich":name}</p></div>
+  <div class="stack">
+    <div class="blk"><label>Gossip</label><p>${esc(c.gossip)}</p><p class="mut" style="font-size:14px;font-weight:400;margin-top:4px">Stimmt es? ${tg?"Du":name} sagt es ehrlich, sonst trinkt ${tg?"du":name}.</p></div>
+    <div class="blk"><label>Frage an ${who}</label><p>${esc(c.question)}</p><p class="mut" style="font-size:14px;font-weight:400;margin-top:4px">Ehrlich antworten oder trinken.</p></div>
+    <div class="blk"><label>Challenge für ${who}</label><p>${esc(c.challenge)}</p><p class="mut" style="font-size:14px;font-weight:400;margin-top:4px">Machen oder trinken.</p></div>
+  </div>
+  <div class="grow"></div>
+  ${isHost()?`<button class="btn" data-a="gnext">${last?(S.pass+1<S.passes?"Nächster Durchgang":"Fertig"):"Weiter"}</button>`:`<p class="mut c">Warte auf ${esc(pname(S.hostPid))} …</p>`}`;
 }
 function vAnswer(){
   const r=S.round,need=required().length,got=S.answered.filter(id=>required().includes(id)).length;
@@ -445,15 +408,13 @@ function vReveal(){
   const max=rows[0][1];
   const last=r.idx+1>=S.total;
   return `${rhead()}<div class="stack"><div class="q" style="font-size:20px">${esc(r.text)}</div>
-  <div class="card c"><p class="mut" style="font-size:13px">Am häufigsten gewählt</p><p style="font-size:30px;font-weight:700">${v.winners.length?v.winners.map(id=>esc(pname(id))).join(" & "):"Niemand"}</p></div>
-  <div class="card">${rows.map(([p,c])=>`<div class="bar ${c===max&&c>0?"top":""}"><div class="l"><span>${esc(p.name)}</span><span>${c}</span></div><div class="b"><i data-w="${max?c/max*100:0}"></i></div></div>`).join("")}</div>
-  <div class="card"><h2>Punktestand</h2>${board()}</div></div>
-  ${isHost()?`<button class="btn" data-a="next">${last?"Ergebnis":"Nächste Runde"}</button>`:`<p class="mut c">Warte auf ${esc(pname(S.hostPid))} …</p>`}`;
+  <div class="card c"><p class="mut" style="font-size:13px">Trinkt</p><p style="font-size:30px;font-weight:700">${v.winners.length?v.winners.map(id=>esc(pname(id))).join(" & "):"Niemand"}</p>${max?`<p class="mut" style="font-size:14px">${max} ${max===1?"Schluck":"Schlücke"}</p>`:""}</div>
+  <div class="card">${rows.map(([p,c])=>`<div class="bar ${c===max&&c>0?"top":""}"><div class="l"><span>${esc(p.name)}</span><span>${c}</span></div><div class="b"><i data-w="${max?c/max*100:0}"></i></div></div>`).join("")}</div></div>
+  ${isHost()?`<button class="btn" data-a="next">${last?"Fertig":"Weiter"}</button>`:`<p class="mut c">Warte auf ${esc(pname(S.hostPid))} …</p>`}`;
 }
 function vEnd(){
-  const rows=S.players.slice().sort((a,b)=>b.score-a.score);
-  return `${header()}<h1 style="margin-top:12px">Ergebnis</h1><p class="mut">${esc(rows[0].name)} liegt vorn.</p>
-  <div class="card">${board()}</div>
+  return `${header()}<h1 style="margin-top:12px">Prost.</h1><p class="mut">Das war die Runde. Nochmal oder was anderes?</p>
+  <div class="grow"></div>
   ${isHost()?`<button class="btn" data-a="again">Zurück zur Lobby</button>`:`<p class="mut c">Warte auf ${esc(pname(S.hostPid))} …</p>`}`;
 }
 function render(force){
@@ -474,7 +435,7 @@ function render(force){
     else html=vEnd();
     if(lost)html=`<div class="err">Verbindung verloren. <button class="link" data-a="reconnect" style="color:var(--text);text-decoration:underline">Neu verbinden</button></div>`+html;
   }
-  const key=S?S.code+S.phase+(S.round?S.round.idx:"")+(S.card?S.card.i+"s"+S.card.step:"")+(S.pass||""):"";
+  const key=S?S.code+S.phase+(S.round?S.round.idx:"")+(S.card?S.card.i:"")+(S.pass||""):"";
   if(mine!==null&&render.k!==key)mine=null;
   render.k=key;
   render.w=S&&S.phase==="write"?S.code+S.pass:"";
@@ -503,7 +464,6 @@ const A = {
   fillc(){draft.challenge=pick(CHAL[pick(S.cats)]);draft.sent=false;render(true)},
   sendsub(){if(!draft.target)return;send({t:"sub",target:draft.target,gossip:draft.gossip,question:draft.question,challenge:draft.challenge});draft.sent=true;render(true)},
   go(){send({t:"go"})},
-  gv(d){mine=d.v;send({t:"gv",v:d.v});if(role==="client")render()},
   gnext(){send({t:"gnext"})},
   ans(d){mine=d.v;send({t:"ans",v:d.v});if(role==="client")render()},
   reveal(){send({t:"reveal"})},
