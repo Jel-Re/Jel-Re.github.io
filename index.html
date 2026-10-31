@@ -67,6 +67,7 @@ label{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.0
 .sc{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line)}.sc:last-child{border:0}
 .err{border:1px solid var(--ink);border-radius:var(--r);padding:12px;font-size:14px}
 .grow{flex:1}
+.chips{display:flex;flex-wrap:wrap;gap:8px}.chip{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border:1px solid var(--line);border-radius:999px;font-size:14px;background:var(--surface)}.chip button{background:none;border:0;padding:0;color:var(--mut);cursor:pointer}
 </style>
 </head>
 <body>
@@ -134,6 +135,13 @@ alltag:["{n} hat im Job schon mal Büromaterial mitgehen lassen.","{n} hat sich 
 wild:["{n} war im Ausland schon mal kurz vor einer Verhaftung.","{n} hat bei einer Wette schon mal etwas Illegales getan.","{n} führt heimlich ein zweites Leben im Internet.","{n} würde für Geld fast alles tun."],
 dunkel:["{n} hat schon mal etwas Wertvolles gestohlen.","{n} hat schon mal einen Freund hintergangen.","{n} hat ein Geheimnis, das alles verändern würde.","{n} hat schon mal eine Lüge erzählt, die jemandem richtig geschadet hat."]
 };
+const BAN_DEFAULT = ["Tyana"];
+function loadBan(){
+  try{const a=JSON.parse(localStorage.getItem("ex_ban")||"null");if(Array.isArray(a))return a.filter(x=>typeof x==="string").slice(0,50)}catch(e){}
+  return BAN_DEFAULT.slice();
+}
+const norm = s => String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+const isBanned = tx => S&&S.banned&&S.banned.some(w=>norm(w).trim()&&norm(tx).includes(norm(w).trim()));
 const pick = a => a[Math.floor(Math.random()*a.length)];
 
 /* ---------- Helfer ---------- */
@@ -148,7 +156,7 @@ const genCode = () => {const a="ABCDEFGHJKLMNPQRSTUVWXYZ";let c="";for(let i=0;i
 
 /* ---------- Zustand ---------- */
 let role=null, peer=null, conn=null, conns={}, S=null, H=null;
-let err="", status="", lost=false, mine=null, myName=ls.get("ex_name")||"";
+let note="", err="", status="", lost=false, mine=null, myName=ls.get("ex_name")||"";
 const pname = id => (S.players.find(p=>p.id===id)||{name:"?"}).name;
 
 function cleanup(){
@@ -163,7 +171,7 @@ function hostRoom(name){
   const code=genCode();
   const p=new Peer("exposed-"+code,OPTS);peer=p;
   p.on("open",()=>{
-    S={code,hostPid:pid,phase:"lobby",players:[{id:pid,name,online:true}],mode:"gossip",cats:Object.keys(CATS),rounds:10,passes:1,pass:0,nsub:0,round:null,card:null,answered:[],reveal:null};
+    S={code,hostPid:pid,phase:"lobby",players:[{id:pid,name,online:true}],mode:"gossip",cats:Object.keys(CATS),rounds:10,passes:1,pass:0,gen:0,banned:loadBan(),nsub:0,round:null,card:null,answered:[],reveal:null};
     H={answers:{},pool:[],idx:0,timer:null,subs:{},cards:[],ci:0};
     status="";bc();
   });
@@ -227,6 +235,13 @@ function act(p,d){
       if([5,10,15,20,30].includes(d.rounds))S.rounds=d.rounds;
       if([1,2,3].includes(d.passes))S.passes=d.passes;
       bc();break;
+    case "ban":{
+      if(!host||S.phase!=="lobby")return;
+      const w=String(d.w||"").trim().slice(0,30);
+      if(d.op==="add"&&w&&!S.banned.some(x=>norm(x)===norm(w))&&S.banned.length<50)S.banned.push(w);
+      else if(d.op==="del")S.banned=S.banned.filter(x=>x!==w);
+      else return;
+      ls.set("ex_ban",JSON.stringify(S.banned));bc();break}
     case "start":
       if(host&&S.phase==="lobby")startGame();break;
     case "ans":
@@ -240,6 +255,7 @@ function act(p,d){
       if(S.phase!=="write")return;
       const k=d.kind,tx=clip(d.text);
       if(!["challenge","question","gossip"].includes(k)||d.target===p||!S.players.some(x=>x.id===d.target)||!tx)return;
+      if(isBanned(tx)){if(p===pid)banNote();else if(conns[p])try{conns[p].send({t:"rej",m:"Dieses Wort ist gesperrt."})}catch(e){}return}
       (H.subs[p]=H.subs[p]||{})[k]={target:d.target,text:tx};
       S.nsub=Object.values(H.subs).reduce((n,s)=>n+Object.keys(s).length,0);
       S.answered=Object.keys(H.subs).filter(id=>{const s=H.subs[id];return s.challenge&&s.question&&s.gossip});
@@ -263,8 +279,9 @@ function startGame(){
   nextRound();
 }
 /* Gossip Wheel: alle schreiben, dann werden die Karten nacheinander aufgedeckt */
+function banNote(){note="Dieses Wort ist gesperrt.";render(true)}
 function startWrite(){
-  H.subs={};H.pending=false;S.answered=[];S.nsub=0;S.card=null;S.phase="write";bc();
+  S.gen++;H.subs={};H.pending=false;S.answered=[];S.nsub=0;S.card=null;S.phase="write";bc();
 }
 function checkSubs(){
   if(S.phase!=="write"||H.pending)return;
@@ -276,8 +293,8 @@ function checkSubs(){
 }
 function startCards(){
   const cs=[];
-  Object.values(H.subs).forEach(s=>Object.keys(s).forEach(k=>{
-    if(S.players.some(x=>x.id===s[k].target))cs.push({kind:k,target:s[k].target,text:s[k].text});
+  Object.entries(H.subs).forEach(([au,s])=>Object.keys(s).forEach(k=>{
+    if(S.players.some(x=>x.id===s[k].target))cs.push({kind:k,target:s[k].target,text:s[k].text,author:au});
   }));
   if(!cs.length)return;
   H.cards=shuffle(cs);H.ci=-1;cardAdvance();
@@ -320,7 +337,8 @@ function joinRoom(code,name){
     c.on("open",()=>c.send({t:"hello",pid,name}));
     c.on("data",d=>{
       if(!d)return;
-      if(d.t==="s"){clearTimeout(timer);S=d.s;status="";lost=false;render()}
+      if(d.t==="rej"){note=d.m;draft.stage=Math.max(0,draft.stage-1);render(true)}
+      else if(d.t==="s"){clearTimeout(timer);S=d.s;status="";lost=false;render()}
       else if(d.t==="err"){clearTimeout(timer);fail(d.m)}
     });
     c.on("close",()=>{if(role==="client"&&conn===c){lost=true;render()}});
@@ -359,6 +377,10 @@ function vLobby(){
     h2+=`<div class="card stack"><h2>Modus</h2><div class="seg">${Object.entries(MODES).map(([k,n])=>`<button class="${S.mode===k?"on":""}" data-a="mode" data-v="${k}">${n}</button>`).join("")}</div>
     <p class="mut" style="font-size:14px">${S.mode==="gossip"?"Alle schreiben gleichzeitig: erst eine Person wählen und ihr eine Challenge geben, dann eine Frage, dann ein Gerücht. Danach wird Karte für Karte aufgedeckt (ohne Absender), der Host drückt Weiter. Wer nicht ehrlich antwortet oder die Challenge nicht macht, trinkt.":"Alle wählen geheim, wer am ehesten zur Frage passt. Wer am häufigsten gewählt wird, trinkt."}</p>
     ${S.mode==="gossip"?`<h2 style="margin-top:6px">Durchgänge</h2><div class="seg">${[1,2,3].map(n=>`<button class="${S.passes===n?"on":""}" data-a="passes" data-v="${n}">${n}</button>`).join("")}</div>`:`<h2 style="margin-top:6px">Runden</h2><div class="seg">${[5,10,15,20,30].map(n=>`<button class="${S.rounds===n?"on":""}" data-a="rounds" data-v="${n}">${n}</button>`).join("")}</div>`}</div>
+    <div class="card stack"><h2>Gesperrte Wörter</h2>
+      <div class="chips">${S.banned.map(w=>`<span class="chip">${esc(w)}<button data-a="unban" data-v="${esc(w)}" aria-label="Entfernen">✕</button></span>`).join("")||'<span class="mut" style="font-size:14px">Keine</span>'}</div>
+      <div class="row" style="align-items:stretch"><input type="text" id="bw" maxlength="30" placeholder="Wort sperren" autocomplete="off"><button class="btn sec" data-a="ban" style="width:96px;flex:none;padding:8px">Sperren</button></div>
+      <p class="mut" style="font-size:13px">Texte mit diesen Wörtern werden abgelehnt (Groß- und Kleinschreibung egal).</p></div>
     <div class="card stack"><h2>Kategorien</h2>${Object.entries(CATS).map(([k,c])=>`<button class="opt ${S.cats.includes(k)?"on":""}" data-a="cat" data-v="${k}"><span>${esc(c.n)}<br><small>${esc(c.d)}</small></span><span>${S.cats.includes(k)?"✓":""}</span></button>`).join("")}
       <div class="row"><button class="btn sec" data-a="allcats">Alle</button><button class="btn sec" data-a="nocats">Keine</button></div></div>
     <button class="btn" data-a="start" ${on<3||!S.cats.length?"disabled":""}>Spiel starten</button>`;
@@ -382,7 +404,7 @@ function wstText(){
   return {got,txt:`${got} / ${req.length} fertig`};
 }
 function vWrite(){
-  const key=S.code+S.pass;if(draft.key!==key)draft=newDraft(key);
+  const key=S.code+S.gen;if(draft.key!==key)draft=newDraft(key);
   const w=wstText(),tag=`<div class="tag">Gossip Wheel${S.passes>1?` · Durchgang ${S.pass+1} / ${S.passes}`:""}</div>`;
   const foot=`<p class="c mut" id="wst" style="font-size:14px">${w.txt}</p>
   ${isHost()?`<button class="btn sec" id="gob" data-a="go" ${S.nsub?"":"disabled"}>Weiter zu den Karten</button>`:""}`;
@@ -393,7 +415,7 @@ function vWrite(){
     const a=2*Math.PI*i/n-Math.PI/2,nm=p.name.length>9?p.name.slice(0,8)+"…":p.name;
     return `<button class="av ${p.id===draft.target?"on":""}" data-a="pick" data-v="${esc(p.id)}" style="left:${(50+39*Math.cos(a)).toFixed(1)}%;top:${(50+39*Math.sin(a)).toFixed(1)}%"><i>${esc(p.name[0].toUpperCase())}</i><span>${esc(nm)}</span></button>`;
   }).join("");
-  const form=t?`<div class="card stack"><h2>${K.f} ${esc(t.name)}</h2>
+  const form=t?`<div class="card stack"><h2>${K.f} ${esc(t.name)}</h2>${note?`<div class="err">${esc(note)}</div>`:""}
     <textarea id="ft" maxlength="140" placeholder="${K.n} schreiben …">${esc(draft.text)}</textarea>
     <div class="row"><button class="btn sec" data-a="fill">Zufall</button><button class="btn" id="sb" data-a="sendsub" ${draft.text.trim()?"":"disabled"}>Senden</button></div></div>`
     :`<p class="c mut">Tippe auf eine Person.</p>`;
@@ -406,6 +428,7 @@ function vCard(){
   return `${header()}<div class="tag">Gossip Wheel · Karte ${c.i+1} / ${c.n}${S.passes>1?` · Durchgang ${c.pass+1} / ${S.passes}`:""}</div>
   <div class="card c"><p class="mut" style="font-size:13px">${K.l}</p><p style="font-size:34px;font-weight:700">${tg?"dich":esc(pname(c.target))}</p></div>
   <div class="blk"><label>${KINDS.find(x=>x.k===c.kind).n} · anonym</label><p>${esc(c.text)}</p><p class="mut" style="font-size:14px;font-weight:400;margin-top:4px">${K.r}</p></div>
+  ${isHost()&&H.cards[H.ci]?`<p class="mut c" style="font-size:14px">Nur für den Host: geschrieben von <b>${esc(pname(H.cards[H.ci].author))}</b></p>`:""}
   <div class="grow"></div>
   ${isHost()?`<button class="btn" data-a="gnext">${last?(S.pass+1<S.passes?"Nächster Durchgang":"Fertig"):"Weiter"}</button>`:`<p class="mut c">Warte auf ${esc(pname(S.hostPid))} …</p>`}`;
 }
@@ -433,7 +456,7 @@ function vEnd(){
   ${isHost()?`<button class="btn" data-a="again">Zurück zur Lobby</button>`:`<p class="mut c">Warte auf ${esc(pname(S.hostPid))} …</p>`}`;
 }
 function render(force){
-  if(!force&&S&&S.phase==="write"&&render.w===S.code+S.pass&&document.getElementById("wst")){
+  if(!force&&S&&S.phase==="write"&&render.w===S.code+S.gen&&document.getElementById("wst")){
     const w=wstText();document.getElementById("wst").textContent=w.txt;
     const g=document.getElementById("gob");if(g)g.disabled=!S.nsub;
     return;
@@ -453,7 +476,7 @@ function render(force){
   const key=S?S.code+S.phase+(S.round?S.round.idx:"")+(S.card?S.card.i:"")+(S.pass||""):"";
   if(mine!==null&&render.k!==key)mine=null;
   render.k=key;
-  render.w=S&&S.phase==="write"?S.code+S.pass:"";
+  render.w=S&&S.phase==="write"?S.code+S.gen:"";
   $app.innerHTML=html;
   if(S&&S.phase==="reveal")requestAnimationFrame(()=>requestAnimationFrame(()=>$app.querySelectorAll("[data-w]").forEach(e=>e.style.width=e.dataset.w+"%")));
 }
@@ -473,14 +496,23 @@ const A = {
   allcats(){send({t:"set",mode:S.mode,cats:Object.keys(CATS),rounds:S.rounds})},
   nocats(){send({t:"set",mode:S.mode,cats:[],rounds:S.rounds})},
   passes(d){send({t:"set",mode:S.mode,cats:S.cats,rounds:S.rounds,passes:+d.v})},
+  ban(){const i=document.getElementById("bw");if(!i)return;const w=i.value.trim();if(!w)return;send({t:"ban",op:"add",w});},
+  unban(d){send({t:"ban",op:"del",w:d.v})},
   start(){send({t:"start"})},
-  pick(d){draft.target=d.v;render(true)},
+  pick(d){draft.target=d.v;note="";render(true)},
   fill(){
     const K=KINDS[draft.stage],k=pick(S.cats),nm=draft.target?pname(draft.target):"";
-    draft.text=K.k==="challenge"?pick(CHAL[k]):K.k==="question"?pick(QS[k]):pick(RUM[k]).replace("{n}",nm);
-    render(true)},
+    let tx="";
+    for(let i=0;i<20;i++){
+      const k2=pick(S.cats);
+      tx=K.k==="challenge"?pick(CHAL[k2]):K.k==="question"?pick(QS[k2]):pick(RUM[k2]).replace("{n}",nm);
+      if(!isBanned(tx))break;
+    }
+    note="";draft.text=tx;render(true)},
   sendsub(){
     if(!draft.target||!draft.text.trim())return;
+    if(isBanned(draft.text)){banNote();return}
+    note="";
     send({t:"sub",kind:KINDS[draft.stage].k,target:draft.target,text:draft.text});
     draft.stage++;draft.target=null;draft.text="";render(true)},
   go(){send({t:"go"})},
@@ -501,7 +533,7 @@ $app.addEventListener("input",e=>{
   draft.text=e.target.value;
   const b=document.getElementById("sb");if(b)b.disabled=!draft.text.trim();
 });
-$app.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="cd")A.join()});
+$app.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="cd")A.join();if(e.key==="Enter"&&e.target.id==="bw")A.ban()});
 
 render();
 (function(){const r=JSON.parse(ss.get("ex_room")||"null");if(r&&r.code&&r.name)joinRoom(r.code,r.name)})();
