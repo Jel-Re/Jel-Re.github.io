@@ -332,14 +332,37 @@ async function getWake(){
   try{if(role&&"wakeLock" in navigator&&(!wake||wake.released))wake=await navigator.wakeLock.request("screen")}catch(e){}
 }
 function fail(m){cleanup();err=m;render()}
+/* Kurzzeitige Probleme mit dem Vermittlungsserver sind kein Grund, einen Raum zu beenden */
+const SOFT=new Set(["network","server-error","socket-error","socket-closed","disconnected"]);
+const RETRY_MS=[1500,3000,5000,8000];
+function netMsg(e){
+  if(e&&e.type==="browser-incompatible")return "Dieser Browser unterstützt die Verbindung nicht. Probier Chrome oder Safari.";
+  if(e&&SOFT.has(e.type))return "Der Vermittlungsserver (peerjs.com) ist gerade nicht erreichbar. Wechsle zwischen WLAN und Mobilfunk, schalte ein VPN aus und versuche es gleich noch einmal. ("+e.type+")";
+  return "Verbindungsfehler ("+(e&&e.type)+")";
+}
+/* Verbindung zum Vermittlungsserver wiederherstellen, solange der Raum offen ist (laufende Spiele laufen weiter) */
+function keepAlive(p,n){
+  n=n||0;
+  if(peer!==p||p.destroyed||!p.disconnected)return;
+  clearTimeout(p._ka);
+  p._ka=setTimeout(()=>{
+    if(peer!==p||p.destroyed||!p.disconnected)return;
+    try{p.reconnect()}catch(e){}
+    setTimeout(()=>keepAlive(p,n+1),4000);
+  },Math.min(1500+n*2500,15000));
+}
 
 /* ---------- Host (hält den Spielstand) ---------- */
-function hostRoom(name,restore){
-  role="host";status=restore?"Raum wird wiederhergestellt …":"Raum wird erstellt …";err="";render();
+function hostRoom(name,restore,n){
+  n=n||0;
+  role="host";status=(restore?"Raum wird wiederhergestellt …":"Raum wird erstellt …")+(n?` (Versuch ${n+1}/5)`:"");err="";render();
   const code=restore?restore.S.code:genCode();
   const p=new Peer("roundtwo-"+code,OPTS);peer=p;
+  let inited=false;
   p.on("open",()=>{
     getWake();
+    if(inited){status="";bc();return}
+    inited=true;
     if(restore){
       S=restore.S;H=Object.assign(restore.H,{timer:null,pending:false,rate:{}});H.av=H.av||{};
       H.chat=H.chat||[];H.cn=H.cn||0;H.done=H.done||{};H.items=H.items||[];
@@ -363,14 +386,23 @@ function hostRoom(name,restore){
     c.on("close",()=>drop(c));
     c.on("error",()=>drop(c));
   });
-  p.on("disconnected",()=>{setTimeout(()=>{try{if(peer===p&&p.disconnected)p.reconnect()}catch(e){}},1500)});
+  p.on("disconnected",()=>keepAlive(p));
   p.on("error",e=>{
     if(e.type==="unavailable-id"){
       try{p.destroy()}catch(x){}
       if(restore){restore.tries=(restore.tries||0)+1;if(restore.tries<20)return void(retryT=setTimeout(()=>hostRoom(name,restore),3000));return fail("Der alte Raum konnte nicht wiederhergestellt werden.")}
       hostRoom(name);
     }
-    else if(e.type!=="peer-unavailable") fail("Verbindungsfehler ("+e.type+")");
+    else if(SOFT.has(e.type)){
+      if(inited)keepAlive(p);
+      else{
+        try{p.destroy()}catch(x){}
+        if(peer!==p)return;
+        if(n<RETRY_MS.length){status=`Verbinde mit dem Vermittlungsserver … (Versuch ${n+2}/5)`;render();clearTimeout(retryT);retryT=setTimeout(()=>hostRoom(name,restore,n+1),RETRY_MS[n])}
+        else fail(netMsg(e));
+      }
+    }
+    else if(e.type!=="peer-unavailable") fail(netMsg(e));
   });
 }
 function saveHost(){
@@ -563,9 +595,10 @@ function doReveal(){
 }
 
 /* ---------- Client ---------- */
-function joinRoom(code,name,keep){
+function joinRoom(code,name,keep,n){
+  n=n||0;
   role="client";err="";room={code,name};
-  if(!keep){S=null;chat=[];unread=0;chatOpen=false;status="Verbinde …";lost=false;render()}
+  if(!keep){S=null;chat=[];unread=0;chatOpen=false;status="Verbinde …"+(n?` (Versuch ${n+1}/5)`:"");lost=false;render()}
   ss.set("ex_room",JSON.stringify({code,name}));
   clearTimeout(retryT);
   try{peer&&peer.destroy()}catch(e){}
@@ -591,8 +624,14 @@ function joinRoom(code,name,keep){
   });
   p.on("error",e=>{
     clearTimeout(timer);if(peer!==p)return;
+    if(got&&SOFT.has(e.type)&&conn&&conn.open)return;   /* direkte Verbindung zum Host steht, der Vermittlungsserver wird nur zum Beitreten gebraucht */
     if(S&&e.type!=="unavailable-id")again(3000);
-    else fail(e.type==="peer-unavailable"?"Raum nicht gefunden. Code prüfen.":"Verbindungsfehler ("+e.type+")");
+    else if(SOFT.has(e.type)&&n<RETRY_MS.length){
+      try{p.destroy()}catch(x){}
+      status=`Verbinde mit dem Vermittlungsserver … (Versuch ${n+2}/5)`;render();
+      clearTimeout(retryT);retryT=setTimeout(()=>{if(role==="client"&&room)joinRoom(code,name,false,n+1)},RETRY_MS[n]);
+    }
+    else fail(e.type==="peer-unavailable"?"Raum nicht gefunden. Code prüfen.":netMsg(e));
   });
 }
 function send(m){
