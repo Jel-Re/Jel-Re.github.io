@@ -2,7 +2,7 @@
 
 Gossip- und Trinkspiel für die Gruppe. Jeder spielt auf dem eigenen Handy, ein Host erstellt einen Raum, die anderen treten per Code, Link oder QR-Code bei.
 
-**Spielen:** https://round-two.github.io/
+**Spielen:** https://round-two-game.github.io/
 
 ## Modi
 - **Gossip Wheel:** Alle schreiben gleichzeitig anonym eine Challenge, eine Frage und ein Gerücht für Personen aus der Runde. Danach werden die Karten zufällig aufgedeckt, der Host drückt Weiter.
