@@ -21,5 +21,5 @@ python3 -m http.server 8099
 ```
 dann `http://127.0.0.1:8099/` öffnen. Die Seite ist komplett statisch, auf GitHub Pages reicht Branch `main`, Ordner `/ (root)`.
 
-## Schrift
-Die Handschrift ist [Caveat](https://github.com/googlefonts/caveat) (SIL Open Font License 1.1), die Dateien liegen in `fonts/`, die Lizenz in `fonts/OFL.txt`. Es werden keine Schriften von Fremdservern geladen.
+## Design
+Schlicht und dunkel, nur Systemschrift. Es werden keine Schriften von Fremdservern geladen.
