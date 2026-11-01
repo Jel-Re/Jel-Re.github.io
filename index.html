@@ -227,7 +227,7 @@ alltag:["{n} hat im Job schon mal Büromaterial mitgehen lassen.","{n} hat sich 
 wild:["{n} war im Ausland schon mal kurz vor einer Verhaftung.","{n} hat bei einer Wette schon mal etwas Illegales getan.","{n} führt heimlich ein zweites Leben im Internet.","{n} würde für Geld fast alles tun."],
 dunkel:["{n} hat schon mal etwas Wertvolles gestohlen.","{n} hat schon mal einen Freund hintergangen.","{n} hat ein Geheimnis, das alles verändern würde.","{n} hat schon mal eine Lüge erzählt, die jemandem richtig geschadet hat."]
 };
-const BAN_DEFAULT = ["Tyana"];
+const BAN_DEFAULT = [];
 function loadBan(){
   try{const a=JSON.parse(localStorage.getItem("ex_ban")||"null");if(Array.isArray(a))return a.filter(x=>typeof x==="string").slice(0,50)}catch(e){}
   return BAN_DEFAULT.slice();
