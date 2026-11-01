@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<title>Exposed</title>
+<title>Round Two</title>
 <meta name="theme-color" content="#6a49f5">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Exposed">
+<meta name="apple-mobile-web-app-title" content="Round Two">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%236a49f5'/%3E%3Cstop offset='1' stop-color='%23f0407f'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='48' height='48' rx='14' fill='url(%23g)'/%3E%3Cpath d='M12 13h24a4 4 0 0 1 4 4v11a4 4 0 0 1-4 4H27l-7 6v-6h-8a4 4 0 0 1-4-4V17a4 4 0 0 1 4-4z' fill='%23fff'/%3E%3Ccircle cx='24' cy='22.5' r='6.5' fill='url(%23g)'/%3E%3Ccircle cx='26' cy='20.5' r='2.2' fill='%23fff'/%3E%3C/svg%3E">
 <style>
@@ -318,7 +318,7 @@ function fail(m){cleanup();err=m;render()}
 function hostRoom(name,restore){
   role="host";status=restore?"Raum wird wiederhergestellt …":"Raum wird erstellt …";err="";render();
   const code=restore?restore.S.code:genCode();
-  const p=new Peer("exposed-"+code,OPTS);peer=p;
+  const p=new Peer("roundtwo-"+code,OPTS);peer=p;
   p.on("open",()=>{
     getWake();
     if(restore){
@@ -556,7 +556,7 @@ function joinRoom(code,name,keep){
   const again=ms=>{if(peer!==p)return;lost=true;render();clearTimeout(retryT);retryT=setTimeout(()=>{if(role==="client"&&room)joinRoom(code,name,true)},ms)};
   const timer=setTimeout(()=>{if(!got&&peer===p){if(S)again(1000);else fail("Raum nicht erreichbar. Code prüfen und erneut versuchen.")}},15000);
   p.on("open",()=>{
-    const c=p.connect("exposed-"+code,{reliable:true});conn=c;
+    const c=p.connect("roundtwo-"+code,{reliable:true});conn=c;
     c.on("open",()=>c.send({t:"hello",pid,name,av:myAv}));
     c.on("data",d=>{
       if(!d)return;
@@ -585,11 +585,11 @@ function send(m){
 const me = () => S&&S.players.find(p=>p.id===pid);
 const isHost = () => S&&S.hostPid===pid;
 function header(){
-  return `<header><span class="brand">${logo()}Exposed</span><span>${S?`Raum ${esc(S.code)} · `:""}<button class="link" data-a="snd" aria-label="Ton">${snd?"🔔":"🔕"}</button> <button class="link" data-a="leave">Verlassen</button></span></header>`;
+  return `<header><span class="brand">${logo()}Round Two</span><span>${S?`Raum ${esc(S.code)} · `:""}<button class="link" data-a="snd" aria-label="Ton">${snd?"🔔":"🔕"}</button> <button class="link" data-a="leave">Verlassen</button></span></header>`;
 }
 function vHome(){
   const q=new URLSearchParams(location.search).get("r")||"";
-  return `${logo("logo")}<div class="word">${[..."Exposed"].map((ch,i)=>`<span style="color:${PAL[i%PAL.length]};animation-delay:${(i*0.12).toFixed(2)}s">${ch}</span>`).join("")}</div><p class="mut c">Gossip-Partyspiel für die Gruppe. Jeder spielt auf dem eigenen Handy.</p>
+  return `${logo("logo")}<div class="word">${[..."Round Two"].map((ch,i)=>`<span style="color:${PAL[i%PAL.length]};animation-delay:${(i*0.12).toFixed(2)}s">${ch===" "?"&nbsp;":ch}</span>`).join("")}</div><p class="mut c">Gossip-Partyspiel für die Gruppe. Jeder spielt auf dem eigenen Handy.</p>
   ${err?`<div class="err">${esc(err)}</div>`:""}
   <div class="card stack"><div class="pickimg"><button class="face f64" data-a="pickimg" aria-label="Foto wählen">${myAv?`<img src="${myAv}" alt="">`:"+"}</button>
     <input type="text" id="nm" maxlength="16" placeholder="Dein Name" value="${esc(myName)}" autocomplete="off"></div>
@@ -868,8 +868,8 @@ const A = {
   next(){send({t:"next"})},
   again(){send({t:"again"})},
   async share(){
-    const url=location.origin+location.pathname+"?r="+S.code,text="Komm in meinen Exposed-Raum: "+S.code;
-    try{if(navigator.share){await navigator.share({title:"Exposed",text,url});return}}catch(e){if(e&&e.name==="AbortError")return}
+    const url=location.origin+location.pathname+"?r="+S.code,text="Komm zu Round Two: "+S.code;
+    try{if(navigator.share){await navigator.share({title:"Round Two",text,url});return}}catch(e){if(e&&e.name==="AbortError")return}
     try{await navigator.clipboard.writeText(url);alert("Link kopiert.")}catch(e){prompt("Link kopieren:",url)}
   }
 };
