@@ -1,0 +1,17 @@
+{
+  "name": "Exposed",
+  "short_name": "Exposed",
+  "description": "Gossip-Partyspiel für die Gruppe. Jeder spielt auf dem eigenen Handy.",
+  "lang": "de",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fbf7ff",
+  "theme_color": "#6a49f5",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

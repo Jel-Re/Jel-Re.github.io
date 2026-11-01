@@ -6,6 +6,12 @@
 <meta name="color-scheme" content="light dark">
 <title>Exposed</title>
 <meta name="theme-color" content="#6a49f5">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Exposed">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%236a49f5'/%3E%3Cstop offset='1' stop-color='%23f0407f'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='48' height='48' rx='14' fill='url(%23g)'/%3E%3Cpath d='M12 13h24a4 4 0 0 1 4 4v11a4 4 0 0 1-4 4H27l-7 6v-6h-8a4 4 0 0 1-4-4V17a4 4 0 0 1 4-4z' fill='%23fff'/%3E%3Ccircle cx='24' cy='22.5' r='6.5' fill='url(%23g)'/%3E%3Ccircle cx='26' cy='20.5' r='2.2' fill='%23fff'/%3E%3C/svg%3E">
 <style>
 :root{
@@ -102,6 +108,8 @@ label{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.0
 .cf{position:absolute;top:-16px;width:10px;height:16px;border-radius:3px;animation:fall linear infinite}
 .enter>*{animation:pop .45s cubic-bezier(.2,.9,.3,1.25) both}
 .enter>*:nth-child(2){animation-delay:.05s}.enter>*:nth-child(3){animation-delay:.1s}.enter>*:nth-child(4){animation-delay:.15s}.enter>*:nth-child(5){animation-delay:.2s}.enter>*:nth-child(n+6){animation-delay:.25s}
+.qrbox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:12px 0 0}
+.qr{width:min(210px,60vw);height:auto;display:block;border-radius:14px;border:6px solid #fff;box-shadow:0 6px 18px rgba(106,73,245,.18)}
 @keyframes pop{from{opacity:0;transform:translateY(14px) scale(.94)}to{opacity:1;transform:none}}
 @keyframes wig{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
 @keyframes bob{0%,100%{transform:translate(-50%,-50%)}50%{transform:translate(-50%,calc(-50% - 5px))}}
@@ -114,6 +122,7 @@ label{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.0
 <body>
 <div id="app"></div>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="qrcode.js"></script>
 <script>
 const CATS = {
   harmlos:{n:"Harmlos",e:"😇",d:"Locker zum Aufwärmen",q:[
@@ -199,6 +208,16 @@ function censor(tx){
 const cleanAv = s => (typeof s==="string"&&s.length<=30000&&/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(s))?s:"";
 const PAL=["#f0407f","#6a49f5","#ff9a1f","#12b89a","#2f9bff","#ff7a45","#a14bff","#2bb673"];
 const pcol=id=>{let h=0;for(const ch of String(id))h=(h*31+ch.charCodeAt(0))>>>0;return PAL[h%PAL.length]};
+/* QR-Code als SVG (dunkle Module auf weissem Grund, auch im Dunkelmodus scanbar). Ohne Bibliothek: leer, der Link-Button bleibt. */
+function qrSvg(text){
+  try{
+    if(typeof qrcode==="undefined")return "";
+    const q=qrcode(0,"M");q.addData(text);q.make();
+    const n=q.getModuleCount();let d="";
+    for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(q.isDark(r,c))d+=`M${c+4} ${r+4}h1v1h-1z`;
+    return `<svg class="qr" viewBox="0 0 ${n+8} ${n+8}" shape-rendering="crispEdges" role="img" aria-label="QR-Code zum Beitreten"><rect width="${n+8}" height="${n+8}" fill="#fff"/><path d="${d}" fill="#1d1530"/></svg>`;
+  }catch(e){return ""}
+}
 const face = (id,name,cls) => AV[id]?`<span class="face ${cls}"><img src="${AV[id]}" alt=""></span>`:`<span class="face ${cls}" style="background:${pcol(id)}">${esc((name||"?")[0].toUpperCase())}</span>`;
 const logo = cls => `<svg class="${cls||""}" viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6a49f5"/><stop offset="1" stop-color="#f0407f"/></linearGradient></defs><rect width="48" height="48" rx="14" fill="url(#lg)"/><path d="M12 13h24a4 4 0 0 1 4 4v11a4 4 0 0 1-4 4H27l-7 6v-6h-8a4 4 0 0 1-4-4V17a4 4 0 0 1 4-4z" fill="#fff"/><circle cx="24" cy="22.5" r="6.5" fill="url(#lg)"/><circle cx="26" cy="20.5" r="2.2" fill="#fff"/></svg>`;
 /* Foto -> quadratischer Ausschnitt, 96x96 px JPEG (ca. 3-6 KB) */
@@ -234,6 +253,8 @@ const genCode = () => {const a="ABCDEFGHJKLMNPQRSTUVWXYZ";let c="";for(let i=0;i
 let role=null, peer=null, conn=null, conns={}, S=null, H=null;
 let AV={};
 let myAv=(()=>{const s=ls.get("ex_av")||"";return /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(s)&&s.length<=30000?s:""})();
+let deferredInstall=null;
+const isStandalone=()=>{try{return matchMedia("(display-mode: standalone)").matches||navigator.standalone===true}catch(e){return false}};
 let room=null, lastRx=0, retryT=null, wake=null, saveT=null;
 let err="", status="", lost=false, mine=null, myName=ls.get("ex_name")||"";
 const pname = id => (S.players.find(p=>p.id===id)||{name:"?"}).name;
@@ -490,12 +511,14 @@ function vHome(){
     <button class="btn" data-a="create">Raum erstellen</button></div>
   <div class="card stack"><h2>Raum beitreten</h2>
     <input type="text" id="cd" maxlength="4" placeholder="Code" value="${esc(q.toUpperCase().slice(0,4))}" autocapitalize="characters" autocomplete="off" style="text-transform:uppercase;letter-spacing:.2em">
-    <button class="btn sec" data-a="join">Beitreten</button></div>`;
+    <button class="btn sec" data-a="join">Beitreten</button></div>
+  ${isStandalone()?"":deferredInstall?`<button class="btn sec" data-a="install">📲 Als App installieren</button>`:/iphone|ipad|ipod/i.test(navigator.userAgent)?`<p class="mut c" style="font-size:13px">📲 Als App: Teilen-Menü → „Zum Home-Bildschirm“.</p>`:""}`;
 }
 function vLobby(){
   const h=isHost(),on=S.players.filter(p=>p.online).length;
   const link=location.origin+location.pathname+"?r="+S.code;
   let h2=`${header()}<div class="card"><p class="mut c" style="font-size:13px">Raum-Code</p><div class="code">${[...S.code].map(ch=>`<b>${esc(ch)}</b>`).join("")}</div>
+    ${(()=>{const q=qrSvg(link);return q?`<div class="qrbox">${q}<p class="mut" style="font-size:13px">Scannen zum Beitreten</p></div>`:""})()}
     <div class="row" style="margin-top:12px"><button class="btn sec" data-a="share">Link teilen</button></div></div>
   <div class="card"><h2>Spieler (${S.players.length})</h2>${S.players.map(p=>`<div class="pl"><span class="who"><span class="dot ${p.online?"":"off"}" style="margin-right:0"></span>${face(p.id,p.name,"f28")}${esc(p.name)}${p.id===S.hostPid?' <span class="mut">· Host</span>':""}</span></div>`).join("")}
     ${on<3?`<p class="mut" style="margin-top:10px;font-size:14px">Mindestens 3 Spieler nötig.</p>`:""}</div>`;
@@ -611,8 +634,13 @@ function render(force){
   if(S&&S.phase==="reveal")requestAnimationFrame(()=>requestAnimationFrame(()=>$app.querySelectorAll("[data-w]").forEach(e=>e.style.width=e.dataset.w+"%")));
 }
 
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredInstall=e;if(!role)render(true)});
+window.addEventListener("appinstalled",()=>{deferredInstall=null;if(!role)render(true)});
+if("serviceWorker" in navigator&&/^https?:$/.test(location.protocol))window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+
 /* ---------- Aktionen ---------- */
 const A = {
+  install(){const d=deferredInstall;if(!d)return;deferredInstall=null;d.prompt();render(true)},
   pickimg(){const i=document.getElementById("fi");if(i)i.click()},
   rmimg(){keepName();myAv="";ls.set("ex_av","");render(true)},
   create(){const n=document.getElementById("nm").value.trim();if(!n)return;myName=n;ls.set("ex_name",n);hostRoom(n)},
