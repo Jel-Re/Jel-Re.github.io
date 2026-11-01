@@ -56,8 +56,12 @@ input[type=text]:focus{outline:2px solid var(--ink);outline-offset:-1px}
 .ring{position:relative;width:min(320px,86vw);aspect-ratio:1;margin:8px auto;border:1px solid var(--line);border-radius:50%}
 .ring .mid{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;color:var(--mut);font-size:13px;width:90px}
 .av{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:0;padding:0;font-size:12px;width:64px}
-.av i{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;font-style:normal;font-weight:700;font-size:16px}
-.av.on i{background:var(--ink);color:var(--ink-t);border-color:var(--ink)}
+.face{display:inline-grid;place-items:center;border-radius:50%;overflow:hidden;background:var(--soft);border:1px solid var(--line);font-weight:700;flex:none;vertical-align:middle;font-style:normal}
+.face img{width:100%;height:100%;object-fit:cover;display:block}
+.f28{width:28px;height:28px;font-size:13px}.f44{width:44px;height:44px;font-size:16px}.f64{width:64px;height:64px;font-size:26px}.f88{width:88px;height:88px;font-size:34px}
+.av.on .face{background:var(--ink);color:var(--ink-t);border-color:var(--ink);box-shadow:0 0 0 3px var(--ink)}
+.who{display:inline-flex;align-items:center;gap:8px}
+.pickimg{display:flex;gap:12px;align-items:center}.pickimg .face{cursor:pointer;padding:0;color:var(--mut)}
 .av.done i{border-color:var(--ink)}
 textarea{width:100%;padding:12px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);color:var(--text);font:inherit;resize:none;min-height:70px}
 textarea:focus{outline:2px solid var(--ink);outline-offset:-1px}
@@ -154,6 +158,25 @@ function censor(tx){
   chars.forEach((ch,i)=>{if(hit[i]){if(!run)out+="...";run=true}else{out+=ch;run=false}});
   return out;
 }
+const cleanAv = s => (typeof s==="string"&&s.length<=30000&&/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(s))?s:"";
+const face = (id,name,cls) => `<span class="face ${cls}">${AV[id]?`<img src="${AV[id]}" alt="">`:esc((name||"?")[0].toUpperCase())}</span>`;
+/* Foto -> quadratischer Ausschnitt, 96x96 px JPEG (ca. 3-6 KB) */
+function readImg(file){
+  return new Promise((res,rej)=>{
+    if(!file||file.size>20*1024*1024)return rej();
+    const fr=new FileReader();
+    fr.onload=()=>{
+      const im=new Image();
+      im.onload=()=>{
+        const s=Math.min(im.width,im.height),c=document.createElement("canvas");c.width=c.height=96;
+        c.getContext("2d").drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,96,96);
+        res(c.toDataURL("image/jpeg",.72));
+      };
+      im.onerror=rej;im.src=fr.result;
+    };
+    fr.onerror=rej;fr.readAsDataURL(file);
+  });
+}
 const pick = a => a[Math.floor(Math.random()*a.length)];
 
 /* ---------- Helfer ---------- */
@@ -168,6 +191,8 @@ const genCode = () => {const a="ABCDEFGHJKLMNPQRSTUVWXYZ";let c="";for(let i=0;i
 
 /* ---------- Zustand ---------- */
 let role=null, peer=null, conn=null, conns={}, S=null, H=null;
+let AV={};
+let myAv=(()=>{const s=ls.get("ex_av")||"";return /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(s)&&s.length<=30000?s:""})();
 let room=null, lastRx=0, retryT=null, wake=null, saveT=null;
 let err="", status="", lost=false, mine=null, myName=ls.get("ex_name")||"";
 const pname = id => (S.players.find(p=>p.id===id)||{name:"?"}).name;
@@ -176,7 +201,7 @@ function cleanup(){
   clearTimeout(retryT);clearTimeout(saveT);room=null;
   try{peer&&peer.destroy()}catch(e){}
   try{wake&&wake.release()}catch(e){}wake=null;
-  peer=null;conn=null;conns={};S=null;H=null;role=null;lost=false;mine=null;status="";ss.del("ex_room");
+  AV={};peer=null;conn=null;conns={};S=null;H=null;role=null;lost=false;mine=null;status="";ss.del("ex_room");
   try{localStorage.removeItem("ex_host")}catch(e){}
 }
 /* Display wach halten, solange man im Raum ist (verhindert Sperrbildschirm) */
@@ -193,13 +218,14 @@ function hostRoom(name,restore){
   p.on("open",()=>{
     getWake();
     if(restore){
-      S=restore.S;H=Object.assign(restore.H,{timer:null,pending:false});
+      S=restore.S;H=Object.assign(restore.H,{timer:null,pending:false});H.av=H.av||{};
       S.players.forEach(x=>{if(x.id!==S.hostPid){x.online=false;x.off=Date.now()}else x.online=true});
     } else {
       S={code,hostPid:pid,phase:"lobby",players:[{id:pid,name,online:true}],mode:"gossip",cats:Object.keys(CATS),rounds:10,passes:1,pass:0,gen:0,nsub:0,round:null,card:null,answered:[],reveal:null};
-      H={answers:{},pool:[],idx:0,timer:null,banned:loadBan(),subs:{},cards:[],ci:0};
+      H={answers:{},pool:[],idx:0,timer:null,banned:loadBan(),subs:{},cards:[],ci:0,av:{}};
+      if(myAv)H.av[pid]=myAv;
     }
-    status="";bc();
+    AV=H.av;status="";bc();
   });
   p.on("connection",c=>{
     c._rx=Date.now();
@@ -243,7 +269,12 @@ function join(c,d){
     pl={id,name,online:true};S.players.push(pl);
   }
   if(conns[id]&&conns[id]!==c){try{conns[id]._pid=null;conns[id].close()}catch(e){}}
-  pl.online=true;c._pid=id;conns[id]=c;bc();
+  const av=cleanAv(d.av);
+  if(av)H.av[id]=av;else delete H.av[id];
+  pl.online=true;c._pid=id;conns[id]=c;
+  try{c.send({t:"avs",m:H.av})}catch(e){}
+  if(av)for(const o in conns)if(o!==id)try{conns[o].send({t:"avs",m:{[id]:av}})}catch(e){}
+  bc();
 }
 function drop(c){
   const id=c._pid;if(!id||conns[id]!==c||!S)return;
@@ -379,11 +410,12 @@ function joinRoom(code,name,keep){
   const timer=setTimeout(()=>{if(!got&&peer===p){if(S)again(1000);else fail("Raum nicht erreichbar. Code prüfen und erneut versuchen.")}},15000);
   p.on("open",()=>{
     const c=p.connect("exposed-"+code,{reliable:true});conn=c;
-    c.on("open",()=>c.send({t:"hello",pid,name}));
+    c.on("open",()=>c.send({t:"hello",pid,name,av:myAv}));
     c.on("data",d=>{
       if(!d)return;
       lastRx=Date.now();
       if(d.t==="hb")return;
+      if(d.t==="avs"){for(const k in d.m){const a=cleanAv(d.m[k]);if(a)AV[k]=a}render();return}
       if(d.t==="s"){got=true;clearTimeout(timer);S=d.s;status="";lost=false;render()}
       else if(d.t==="err"){clearTimeout(timer);fail(d.m)}
     });
@@ -410,7 +442,10 @@ function vHome(){
   const q=new URLSearchParams(location.search).get("r")||"";
   return `<h1>Exposed</h1><p class="mut">Gossip-Partyspiel für die Gruppe. Jeder spielt auf dem eigenen Handy.</p>
   ${err?`<div class="err">${esc(err)}</div>`:""}
-  <div class="card stack"><input type="text" id="nm" maxlength="16" placeholder="Dein Name" value="${esc(myName)}" autocomplete="off">
+  <div class="card stack"><div class="pickimg"><button class="face f64" data-a="pickimg" aria-label="Foto wählen">${myAv?`<img src="${myAv}" alt="">`:"+"}</button>
+    <input type="text" id="nm" maxlength="16" placeholder="Dein Name" value="${esc(myName)}" autocomplete="off"></div>
+    <input type="file" id="fi" accept="image/*" hidden>
+    <p class="mut" style="font-size:13px">${myAv?'Dein Foto wird allen im Raum angezeigt. <button class="link" data-a="rmimg">Entfernen</button>':"Optional: Foto antippen. Es wird auf dem Handy verkleinert und nur an die Mitspieler gesendet."}</p>
     <button class="btn" data-a="create">Raum erstellen</button></div>
   <div class="card stack"><h2>Raum beitreten</h2>
     <input type="text" id="cd" maxlength="4" placeholder="Code" value="${esc(q.toUpperCase().slice(0,4))}" autocapitalize="characters" autocomplete="off" style="text-transform:uppercase;letter-spacing:.2em">
@@ -421,7 +456,7 @@ function vLobby(){
   const link=location.origin+location.pathname+"?r="+S.code;
   let h2=`${header()}<div class="card"><p class="mut c" style="font-size:13px">Raum-Code</p><div class="code">${esc(S.code)}</div>
     <div class="row" style="margin-top:12px"><button class="btn sec" data-a="share">Link teilen</button></div></div>
-  <div class="card"><h2>Spieler (${S.players.length})</h2>${S.players.map(p=>`<div class="pl"><span><span class="dot ${p.online?"":"off"}"></span>${esc(p.name)}${p.id===S.hostPid?' <span class="mut">· Host</span>':""}</span></div>`).join("")}
+  <div class="card"><h2>Spieler (${S.players.length})</h2>${S.players.map(p=>`<div class="pl"><span class="who"><span class="dot ${p.online?"":"off"}" style="margin-right:0"></span>${face(p.id,p.name,"f28")}${esc(p.name)}${p.id===S.hostPid?' <span class="mut">· Host</span>':""}</span></div>`).join("")}
     ${on<3?`<p class="mut" style="margin-top:10px;font-size:14px">Mindestens 3 Spieler nötig.</p>`:""}</div>`;
   if(h){
     h2+=`<div class="card stack"><h2>Modus</h2><div class="seg">${Object.entries(MODES).map(([k,n])=>`<button class="${S.mode===k?"on":""}" data-a="mode" data-v="${k}">${n}</button>`).join("")}</div>
@@ -463,7 +498,7 @@ function vWrite(){
   const t=others.find(p=>p.id===draft.target);
   const ring=others.map((p,i)=>{
     const a=2*Math.PI*i/n-Math.PI/2,nm=p.name.length>9?p.name.slice(0,8)+"…":p.name;
-    return `<button class="av ${p.id===draft.target?"on":""}" data-a="pick" data-v="${esc(p.id)}" style="left:${(50+39*Math.cos(a)).toFixed(1)}%;top:${(50+39*Math.sin(a)).toFixed(1)}%"><i>${esc(p.name[0].toUpperCase())}</i><span>${esc(nm)}</span></button>`;
+    return `<button class="av ${p.id===draft.target?"on":""}" data-a="pick" data-v="${esc(p.id)}" style="left:${(50+39*Math.cos(a)).toFixed(1)}%;top:${(50+39*Math.sin(a)).toFixed(1)}%">${face(p.id,p.name,"f44")}<span>${esc(nm)}</span></button>`;
   }).join("");
   const form=t?`<div class="card stack"><h2>${K.f} ${esc(t.name)}</h2>
     <textarea id="ft" maxlength="140" placeholder="${K.n} schreiben …">${esc(draft.text)}</textarea>
@@ -476,7 +511,7 @@ function vCard(){
   const c=S.card,tg=c.target===pid,K=KCARD[c.kind];
   const last=c.i+1>=c.n;
   return `${header()}<div class="tag">Gossip Wheel · Karte ${c.i+1} / ${c.n}${S.passes>1?` · Durchgang ${c.pass+1} / ${S.passes}`:""}</div>
-  <div class="card c"><p class="mut" style="font-size:13px">${K.l}</p><p style="font-size:34px;font-weight:700">${tg?"dich":esc(pname(c.target))}</p></div>
+  <div class="card c">${face(c.target,pname(c.target),"f88")}<p class="mut" style="font-size:13px;margin-top:8px">${K.l}</p><p style="font-size:34px;font-weight:700">${tg?"dich":esc(pname(c.target))}</p></div>
   <div class="blk"><label>${KINDS.find(x=>x.k===c.kind).n} · anonym</label><p>${esc(c.text)}</p><p class="mut" style="font-size:14px;font-weight:400;margin-top:4px">${K.r}</p></div>
   ${isHost()&&H.cards[H.ci]?`<p class="mut c" style="font-size:14px">Nur für den Host: geschrieben von <b>${esc(pname(H.cards[H.ci].author))}</b></p>`:""}
   <div class="grow"></div>
@@ -496,8 +531,8 @@ function vReveal(){
   const max=rows[0][1];
   const last=r.idx+1>=S.total;
   return `${rhead()}<div class="stack"><div class="q" style="font-size:20px">${esc(r.text)}</div>
-  <div class="card c"><p class="mut" style="font-size:13px">Trinkt</p><p style="font-size:30px;font-weight:700">${v.winners.length?v.winners.map(id=>esc(pname(id))).join(" & "):"Niemand"}</p>${max?`<p class="mut" style="font-size:14px">${max} ${max===1?"Schluck":"Schlücke"}</p>`:""}</div>
-  <div class="card">${rows.map(([p,c])=>`<div class="bar ${c===max&&c>0?"top":""}"><div class="l"><span>${esc(p.name)}</span><span>${c}</span></div><div class="b"><i data-w="${max?c/max*100:0}"></i></div></div>`).join("")}</div></div>
+  <div class="card c"><p class="mut" style="font-size:13px">Trinkt</p>${v.winners.length?`<div style="display:flex;gap:8px;justify-content:center;margin:6px 0">${v.winners.map(id=>face(id,pname(id),"f64")).join("")}</div>`:""}<p style="font-size:30px;font-weight:700">${v.winners.length?v.winners.map(id=>esc(pname(id))).join(" & "):"Niemand"}</p>${max?`<p class="mut" style="font-size:14px">${max} ${max===1?"Schluck":"Schlücke"}</p>`:""}</div>
+  <div class="card">${rows.map(([p,c])=>`<div class="bar ${c===max&&c>0?"top":""}"><div class="l"><span class="who">${face(p.id,p.name,"f28")}${esc(p.name)}</span><span>${c}</span></div><div class="b"><i data-w="${max?c/max*100:0}"></i></div></div>`).join("")}</div></div>
   ${isHost()?`<button class="btn" data-a="next">${last?"Fertig":"Weiter"}</button>`:`<p class="mut c">Warte auf ${esc(pname(S.hostPid))} …</p>`}`;
 }
 function vEnd(){
@@ -535,6 +570,8 @@ function render(force){
 
 /* ---------- Aktionen ---------- */
 const A = {
+  pickimg(){const i=document.getElementById("fi");if(i)i.click()},
+  rmimg(){keepName();myAv="";ls.set("ex_av","");render(true)},
   create(){const n=document.getElementById("nm").value.trim();if(!n)return;myName=n;ls.set("ex_name",n);hostRoom(n)},
   join(){const n=document.getElementById("nm").value.trim(),c=document.getElementById("cd").value.trim().toUpperCase();
     if(!n){err="Bitte Namen eingeben.";return render()}
@@ -574,6 +611,13 @@ const A = {
   }
 };
 $app.addEventListener("click",e=>{const b=e.target.closest("[data-a]");if(b&&!b.disabled&&A[b.dataset.a])A[b.dataset.a](b.dataset)});
+function keepName(){const n=document.getElementById("nm");if(n)myName=n.value}
+$app.addEventListener("change",async e=>{
+  if(e.target.id!=="fi"||!e.target.files[0])return;
+  keepName();
+  try{myAv=await readImg(e.target.files[0]);ls.set("ex_av",myAv)}catch(x){err="Das Bild konnte nicht gelesen werden.";}
+  render(true);
+});
 $app.addEventListener("input",e=>{
   if(e.target.id!=="ft")return;
   draft.text=e.target.value;
