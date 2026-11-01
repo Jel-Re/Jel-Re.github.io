@@ -168,42 +168,67 @@ const genCode = () => {const a="ABCDEFGHJKLMNPQRSTUVWXYZ";let c="";for(let i=0;i
 
 /* ---------- Zustand ---------- */
 let role=null, peer=null, conn=null, conns={}, S=null, H=null;
+let room=null, lastRx=0, retryT=null, wake=null, saveT=null;
 let err="", status="", lost=false, mine=null, myName=ls.get("ex_name")||"";
 const pname = id => (S.players.find(p=>p.id===id)||{name:"?"}).name;
 
 function cleanup(){
+  clearTimeout(retryT);clearTimeout(saveT);room=null;
   try{peer&&peer.destroy()}catch(e){}
+  try{wake&&wake.release()}catch(e){}wake=null;
   peer=null;conn=null;conns={};S=null;H=null;role=null;lost=false;mine=null;status="";ss.del("ex_room");
+  try{localStorage.removeItem("ex_host")}catch(e){}
+}
+/* Display wach halten, solange man im Raum ist (verhindert Sperrbildschirm) */
+async function getWake(){
+  try{if(role&&"wakeLock" in navigator&&(!wake||wake.released))wake=await navigator.wakeLock.request("screen")}catch(e){}
 }
 function fail(m){cleanup();err=m;render()}
 
 /* ---------- Host (hält den Spielstand) ---------- */
-function hostRoom(name){
-  role="host";status="Raum wird erstellt …";err="";render();
-  const code=genCode();
+function hostRoom(name,restore){
+  role="host";status=restore?"Raum wird wiederhergestellt …":"Raum wird erstellt …";err="";render();
+  const code=restore?restore.S.code:genCode();
   const p=new Peer("exposed-"+code,OPTS);peer=p;
   p.on("open",()=>{
-    S={code,hostPid:pid,phase:"lobby",players:[{id:pid,name,online:true}],mode:"gossip",cats:Object.keys(CATS),rounds:10,passes:1,pass:0,gen:0,nsub:0,round:null,card:null,answered:[],reveal:null};
-    H={answers:{},pool:[],idx:0,timer:null,banned:loadBan(),subs:{},cards:[],ci:0};
+    getWake();
+    if(restore){
+      S=restore.S;H=Object.assign(restore.H,{timer:null,pending:false});
+      S.players.forEach(x=>{if(x.id!==S.hostPid){x.online=false;x.off=Date.now()}else x.online=true});
+    } else {
+      S={code,hostPid:pid,phase:"lobby",players:[{id:pid,name,online:true}],mode:"gossip",cats:Object.keys(CATS),rounds:10,passes:1,pass:0,gen:0,nsub:0,round:null,card:null,answered:[],reveal:null};
+      H={answers:{},pool:[],idx:0,timer:null,banned:loadBan(),subs:{},cards:[],ci:0};
+    }
     status="";bc();
   });
   p.on("connection",c=>{
+    c._rx=Date.now();
     c.on("data",d=>onHost(c,d));
     c.on("close",()=>drop(c));
     c.on("error",()=>drop(c));
   });
-  p.on("disconnected",()=>{try{p.reconnect()}catch(e){}});
+  p.on("disconnected",()=>{setTimeout(()=>{try{if(peer===p&&p.disconnected)p.reconnect()}catch(e){}},1500)});
   p.on("error",e=>{
-    if(e.type==="unavailable-id"){try{p.destroy()}catch(x){}hostRoom(name)}
+    if(e.type==="unavailable-id"){
+      try{p.destroy()}catch(x){}
+      if(restore){restore.tries=(restore.tries||0)+1;if(restore.tries<20)return void(retryT=setTimeout(()=>hostRoom(name,restore),3000));return fail("Der alte Raum konnte nicht wiederhergestellt werden.")}
+      hostRoom(name);
+    }
     else if(e.type!=="peer-unavailable") fail("Verbindungsfehler ("+e.type+")");
   });
 }
+function saveHost(){
+  if(role!=="host"||!S||!H)return;
+  try{const {timer,...h}=H;localStorage.setItem("ex_host",JSON.stringify({ts:Date.now(),S,H:h}))}catch(e){}
+}
 function bc(){
-  if(role==="host") for(const id in conns){try{conns[id].send({t:"s",s:S})}catch(e){}}
+  if(role==="host"){for(const id in conns){try{conns[id].send({t:"s",s:S})}catch(e){}}saveHost()}
   render();
 }
 function onHost(c,d){
   if(!d||typeof d!=="object")return;
+  c._rx=Date.now();
+  if(d.t==="ping")return;
   if(d.t==="hello"){return join(c,d)}
   if(c._pid) act(c._pid,d);
 }
@@ -223,8 +248,7 @@ function join(c,d){
 function drop(c){
   const id=c._pid;if(!id||conns[id]!==c||!S)return;
   delete conns[id];
-  if(S.phase==="lobby") S.players=S.players.filter(p=>p.id!==id);
-  else {const pl=S.players.find(p=>p.id===id);if(pl)pl.online=false;}
+  const pl=S.players.find(p=>p.id===id);if(pl){pl.online=false;pl.off=Date.now()}
   checkAll();checkSubs();bc();
 }
 const required = () => S.players.filter(p=>p.online).map(p=>p.id);
@@ -275,6 +299,11 @@ function act(p,d){
       if(host&&S.phase==="write")startCards();break;
     case "gnext":
       if(host&&S.phase==="card")cardAdvance();break;
+    case "bye":{
+      if(host)return;
+      if(S.phase==="lobby")S.players=S.players.filter(x=>x.id!==p);
+      else{const pl=S.players.find(x=>x.id===p);if(pl){pl.online=false;pl.off=Date.now()}}
+      delete conns[p];checkAll();checkSubs();bc();break}
     case "again":
       if(host&&S.phase==="end"){clearTimeout(H.timer);S.phase="lobby";S.round=null;S.card=null;S.reveal=null;S.answered=[];S.players=S.players.filter(x=>x.online);bc()}break;
   }
@@ -337,22 +366,34 @@ function doReveal(){
 }
 
 /* ---------- Client ---------- */
-function joinRoom(code,name){
-  role="client";status="Verbinde …";err="";lost=false;render();
+function joinRoom(code,name,keep){
+  role="client";err="";room={code,name};
+  if(!keep){S=null;status="Verbinde …";lost=false;render()}
   ss.set("ex_room",JSON.stringify({code,name}));
-  const p=new Peer(OPTS);peer=p;
-  const timer=setTimeout(()=>{if(!S&&peer===p)fail("Raum nicht erreichbar. Code prüfen und erneut versuchen.")},15000);
+  clearTimeout(retryT);
+  try{peer&&peer.destroy()}catch(e){}
+  getWake();
+  const p=new Peer(OPTS);peer=p;conn=null;
+  let got=false;
+  const again=ms=>{if(peer!==p)return;lost=true;render();clearTimeout(retryT);retryT=setTimeout(()=>{if(role==="client"&&room)joinRoom(code,name,true)},ms)};
+  const timer=setTimeout(()=>{if(!got&&peer===p){if(S)again(1000);else fail("Raum nicht erreichbar. Code prüfen und erneut versuchen.")}},15000);
   p.on("open",()=>{
     const c=p.connect("exposed-"+code,{reliable:true});conn=c;
     c.on("open",()=>c.send({t:"hello",pid,name}));
     c.on("data",d=>{
       if(!d)return;
-      if(d.t==="s"){clearTimeout(timer);S=d.s;status="";lost=false;render()}
+      lastRx=Date.now();
+      if(d.t==="hb")return;
+      if(d.t==="s"){got=true;clearTimeout(timer);S=d.s;status="";lost=false;render()}
       else if(d.t==="err"){clearTimeout(timer);fail(d.m)}
     });
-    c.on("close",()=>{if(role==="client"&&conn===c){lost=true;render()}});
+    c.on("close",()=>{if(role==="client"&&conn===c)again(1500)});
   });
-  p.on("error",e=>{clearTimeout(timer);if(peer===p)fail(e.type==="peer-unavailable"?"Raum nicht gefunden. Code prüfen.":"Verbindungsfehler ("+e.type+")")});
+  p.on("error",e=>{
+    clearTimeout(timer);if(peer!==p)return;
+    if(S&&e.type!=="unavailable-id")again(3000);
+    else fail(e.type==="peer-unavailable"?"Raum nicht gefunden. Code prüfen.":"Verbindungsfehler ("+e.type+")");
+  });
 }
 function send(m){
   if(role==="host")act(pid,m);
@@ -486,6 +527,8 @@ function render(force){
   if(mine!==null&&render.k!==key)mine=null;
   render.k=key;
   render.w=S&&S.phase==="write"?S.code+S.gen:"";
+  if(html===render.h)return;
+  render.h=html;
   $app.innerHTML=html;
   if(S&&S.phase==="reveal")requestAnimationFrame(()=>requestAnimationFrame(()=>$app.querySelectorAll("[data-w]").forEach(e=>e.style.width=e.dataset.w+"%")));
 }
@@ -497,8 +540,8 @@ const A = {
     if(!n){err="Bitte Namen eingeben.";return render()}
     if(c.length!==4){err="Der Code hat 4 Buchstaben.";return render()}
     myName=n;ls.set("ex_name",n);joinRoom(c,n)},
-  leave(){if(S&&role==="host"&&!confirm("Raum schließen? Das beendet das Spiel für alle."))return;cleanup();err="";render()},
-  reconnect(){const r=JSON.parse(ss.get("ex_room")||"null");if(!r)return;try{peer&&peer.destroy()}catch(e){}S=null;joinRoom(r.code,r.name)},
+  leave(){if(S&&role==="host"&&!confirm("Raum schließen? Das beendet das Spiel für alle."))return;if(role==="client"&&conn&&conn.open)try{conn.send({t:"bye"})}catch(e){}cleanup();err="";render()},
+  reconnect(){if(room)joinRoom(room.code,room.name,true)},
   mode(d){send({t:"set",mode:d.v,cats:S.cats,rounds:S.rounds})},
   rounds(d){send({t:"set",mode:S.mode,cats:S.cats,rounds:+d.v})},
   cat(d){const c=S.cats.includes(d.v)?S.cats.filter(k=>k!==d.v):[...S.cats,d.v];send({t:"set",mode:S.mode,cats:c,rounds:S.rounds})},
@@ -539,7 +582,46 @@ $app.addEventListener("input",e=>{
 $app.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="cd")A.join();if(e.key==="Enter"&&e.target.id==="bw")A.ban()});
 
 render();
-(function(){const r=JSON.parse(ss.get("ex_room")||"null");if(r&&r.code&&r.name)joinRoom(r.code,r.name)})();
+/* Heartbeat: Host meldet sich alle 5 s, Clients melden sich alle 4 s. Tote Verbindungen werden erkannt. */
+setInterval(()=>{
+  if(role==="host"&&S){
+    const now=Date.now();
+    for(const id in conns){
+      const c=conns[id];
+      if(now-(c._rx||0)>16000){try{c.close()}catch(e){}drop(c)}
+      else try{c.send({t:"hb"})}catch(e){}
+    }
+    if(S.phase==="lobby"){
+      const n=S.players.length;
+      S.players=S.players.filter(p=>p.online||p.id===S.hostPid||now-(p.off||now)<60000);
+      if(S.players.length!==n)bc();
+    }
+  } else if(role==="client"&&room){
+    if(conn&&conn.open)try{conn.send({t:"ping"})}catch(e){}
+    if(S&&!lost&&Date.now()-lastRx>14000){lost=true;render();joinRoom(room.code,room.name,true)}
+  }
+},4000);
+/* Zurück aus dem Hintergrund: sofort neu verbinden bzw. Zustand neu senden */
+function resume(){
+  if(document.visibilityState&&document.visibilityState!=="visible")return;
+  getWake();
+  if(role==="host"&&peer){try{if(peer.disconnected)peer.reconnect()}catch(e){}bc()}
+  else if(role==="client"&&room&&(lost||!conn||!conn.open||Date.now()-lastRx>6000)){
+    if(S){lost=true;render()}
+    joinRoom(room.code,room.name,true);
+  }
+}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")saveHost();else resume()});
+window.addEventListener("pagehide",saveHost);
+window.addEventListener("pageshow",e=>{if(e.persisted)resume()});
+window.addEventListener("online",resume);
+(function(){
+  const r=JSON.parse(ss.get("ex_room")||"null");
+  if(r&&r.code&&r.name){joinRoom(r.code,r.name);return}
+  if(new URLSearchParams(location.search).get("r"))return;
+  let h=null;try{h=JSON.parse(localStorage.getItem("ex_host")||"null")}catch(e){}
+  if(h&&h.S&&h.H&&Date.now()-h.ts<30*60*1000){pid=h.S.hostPid;ss.set("ex_pid",pid);hostRoom(null,h)}
+})();
 </script>
 </body>
 </html>
