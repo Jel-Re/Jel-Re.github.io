@@ -316,6 +316,7 @@ let myAv=(()=>{const s=ls.get("ex_av")||"";return /^data:image\/jpeg;base64,[A-Z
 let deferredInstall=null;
 const isStandalone=()=>{try{return matchMedia("(display-mode: standalone)").matches||navigator.standalone===true}catch(e){return false}};
 let chat=[], unread=0, chatOpen=false, snd=(ls.get("ex_snd")!=="0"), actx=null;
+let diag=null;
 let room=null, lastRx=0, retryT=null, wake=null, saveT=null;
 let err="", status="", lost=false, mine=null, myName=ls.get("ex_name")||"";
 const pname = id => (S.players.find(p=>p.id===id)||{name:"?"}).name;
@@ -332,6 +333,48 @@ async function getWake(){
   try{if(role&&"wakeLock" in navigator&&(!wake||wake.released))wake=await navigator.wakeLock.request("screen")}catch(e){}
 }
 function fail(m){cleanup();err=m;render()}
+/* Verbindungstest: findet heraus, ob Webzugang, WebSocket und WebRTC zum Vermittlungsserver klappen */
+const timeoutP=ms=>new Promise((_,r)=>setTimeout(()=>r(new Error("timeout")),ms));
+async function runDiag(){
+  diag={lines:[],done:false,sum:""};
+  const add=(ok,txt)=>{diag.lines.push({ok,t:txt});render(true)};
+  const ua=navigator.userAgent;
+  add(null,"Gerät: "+(/iPhone|iPad|iPod/.test(ua)?"iPhone/iPad":/Android/.test(ua)?"Android":"Computer")+", Browser: "+(/CriOS|Chrome/.test(ua)?"Chrome":/FxiOS|Firefox/.test(ua)?"Firefox":/Safari/.test(ua)?"Safari":"anderer")+", online: "+(navigator.onLine?"ja":"nein")+(navigator.connection&&navigator.connection.effectiveType?", Netz: "+navigator.connection.effectiveType:""));
+  let t0=performance.now(),http=false;
+  try{await Promise.race([fetch("https://0.peerjs.com/",{mode:"no-cors",cache:"no-store"}),timeoutP(8000)]);http=true;add(true,"Vermittlungsserver per HTTPS erreichbar ("+Math.round(performance.now()-t0)+" ms)")}
+  catch(e){add(false,"Vermittlungsserver per HTTPS NICHT erreichbar")}
+  const ws=await new Promise(res=>{
+    const t1=performance.now(),id="diag"+Math.random().toString(36).slice(2,10);let done=false,sock;
+    const fin=r=>{if(done)return;done=true;clearTimeout(tm);try{sock.close()}catch(e){}res(r)};
+    const tm=setTimeout(()=>fin({ok:false,msg:"WebSocket: keine Antwort nach 10 Sekunden"}),10000);
+    try{sock=new WebSocket("wss://0.peerjs.com/peerjs?key=peerjs&id="+id+"&token="+Math.random().toString(36).slice(2))}
+    catch(e){return fin({ok:false,msg:"WebSocket wird vom Browser blockiert ("+e.name+")"})}
+    sock.onmessage=ev=>{try{const m=JSON.parse(ev.data);
+      if(m.type==="OPEN")fin({ok:true,msg:"WebSocket zum Vermittlungsserver steht ("+Math.round(performance.now()-t1)+" ms)"});
+      else if(m.type==="ID-TAKEN"||m.type==="ERROR")fin({ok:false,msg:"Server meldet: "+m.type})}catch(e){}};
+    sock.onclose=ev=>fin({ok:false,msg:"WebSocket wurde sofort geschlossen (Code "+ev.code+(ev.reason?", "+ev.reason:"")+")"});
+  });
+  add(ws.ok,ws.msg);
+  const rtc=await new Promise(res=>{
+    if(typeof RTCPeerConnection==="undefined")return res({ok:false,msg:"WebRTC fehlt in diesem Browser"});
+    let pc;try{pc=new RTCPeerConnection({iceServers:[{urls:"stun:stun.l.google.com:19302"}]})}catch(e){return res({ok:false,msg:"WebRTC lässt sich nicht starten ("+e.name+")"})}
+    const c={host:0,srflx:0,relay:0};let done=false;
+    const fin=()=>{if(done)return;done=true;try{pc.close()}catch(e){}
+      res(c.srflx?{ok:true,msg:"WebRTC und STUN funktionieren (öffentliche Adresse gefunden)"}
+        :c.host?{ok:false,msg:"WebRTC startet, aber STUN antwortet nicht (nur lokale Adressen)"}
+        :{ok:false,msg:"WebRTC findet keine Netzwerkadressen"})};
+    pc.onicecandidate=ev=>{if(!ev.candidate)return fin();const m=/ typ (\w+)/.exec(ev.candidate.candidate);if(m&&m[1] in c)c[m[1]]++};
+    try{pc.createDataChannel("x");pc.createOffer().then(o=>pc.setLocalDescription(o)).catch(()=>fin())}catch(e){fin()}
+    setTimeout(fin,6000);
+  });
+  add(rtc.ok,rtc.msg);
+  diag.sum=!http?"Der Vermittlungsserver ist von diesem Netz aus nicht erreichbar. Probier ein anderes Netz (WLAN oder Mobilfunk), schalte VPN oder iCloud Private Relay aus."
+    :!ws.ok?"Webseiten gehen, aber die WebSocket-Verbindung wird blockiert. Meist liegt das an einem Werbe- oder Inhaltsblocker, einem VPN, einem Firmen- oder Schulnetz oder an Sicherheitssoftware. Probier ein anderes Netz oder ein privates Fenster ohne Blocker."
+    :!rtc.ok?"Der Vermittlungsserver geht, aber direkte Verbindungen zwischen den Handys (WebRTC) nicht ganz. Im selben WLAN klappt es oft trotzdem."
+    :"Alles in Ordnung. Wenn trotzdem ein Fehler erscheint, schick mir den genauen Text.";
+  diag.done=true;render(true);
+}
+function diagText(){return ["Round Two Verbindungstest ("+location.host+")"].concat(diag.lines.map(l=>(l.ok===null?"- ":l.ok?"OK ":"FEHLER ")+l.t),[diag.sum]).join("\n")}
 /* Kurzzeitige Probleme mit dem Vermittlungsserver sind kein Grund, einen Raum zu beenden */
 const SOFT=new Set(["network","server-error","socket-error","socket-closed","disconnected"]);
 const RETRY_MS=[1500,3000,5000,8000];
@@ -645,6 +688,14 @@ const isHost = () => S&&S.hostPid===pid;
 function header(){
   return `<header><span class="brand">${logo()}Round Two</span><span>${S?`Raum ${esc(S.code)} · `:""}<button class="link" data-a="snd" aria-label="Ton">${snd?"🔔":"🔕"}</button> <button class="link" data-a="leave">Verlassen</button></span></header>`;
 }
+function vDiag(){
+  return `<header><span class="brand">${logo()}Round Two</span><span></span></header>
+  <h1 style="font-size:44px;margin-top:8px">Verbindungstest</h1>
+  <div class="card stack">${diag.lines.map(l=>`<div class="pl"><span>${l.ok===null?"•":l.ok?"✓":"✗"} ${esc(l.t)}</span></div>`).join("")}
+  ${diag.done?`<p style="font-weight:700">${esc(diag.sum)}</p>`:`<p class="mut">Läuft … (bis zu 25 Sekunden)</p>`}</div>
+  ${diag.done?`<button class="btn" data-a="diagcopy">Ergebnis kopieren</button>`:""}
+  <button class="btn sec" data-a="diagback">Zurück</button>`;
+}
 function vHome(){
   const q=new URLSearchParams(location.search).get("r")||"";
   return `${logo("logo")}<div class="word">${[..."Round Two"].map((ch,i)=>`<span style="color:${i<5?"var(--text)":"var(--tape)"}">${ch===" "?"&nbsp;":ch}</span>`).join("")}</div><p class="mut c">Gossip-Partyspiel für die Gruppe. Jeder spielt auf dem eigenen Handy.</p>
@@ -657,7 +708,8 @@ function vHome(){
   <div class="card stack"><h2>Raum beitreten</h2>
     <input type="text" id="cd" maxlength="4" placeholder="Code" value="${esc(q.toUpperCase().slice(0,4))}" autocapitalize="characters" autocomplete="off" style="text-transform:uppercase;letter-spacing:.2em">
     <button class="btn sec" data-a="join">Beitreten</button></div>
-  ${isStandalone()?"":deferredInstall?`<button class="btn sec" data-a="install">📲 Als App installieren</button>`:/iphone|ipad|ipod/i.test(navigator.userAgent)?`<p class="mut c" style="font-size:13px">📲 Als App: Teilen-Menü → „Zum Home-Bildschirm“.</p>`:""}`;
+  ${isStandalone()?"":deferredInstall?`<button class="btn sec" data-a="install">📲 Als App installieren</button>`:/iphone|ipad|ipod/i.test(navigator.userAgent)?`<p class="mut c" style="font-size:13px">📲 Als App: Teilen-Menü → „Zum Home-Bildschirm“.</p>`:""}
+  <button class="link" data-a="diag" style="align-self:center">Probleme beim Verbinden? Verbindung testen</button>`;
 }
 function vLobby(){
   const h=isHost(),on=S.players.filter(p=>p.online).length;
@@ -783,7 +835,7 @@ function render(force){
     return;
   }
   let html;
-  if(!role) html=vHome();
+  if(!role) html=diag?vDiag():vHome();
   else if(!S) html=`${header()}<p class="c mut" style="margin-top:40px">${esc(status||"Verbinde …")}</p>`;
   else {
     if(S.phase==="lobby")html=vLobby();
@@ -888,6 +940,9 @@ document.getElementById("chat").addEventListener("keydown",e=>{
 
 /* ---------- Aktionen ---------- */
 const A = {
+  diag(){runDiag()},
+  diagback(){diag=null;render(true)},
+  async diagcopy(){const x=diagText();try{await navigator.clipboard.writeText(x);alert("Kopiert. Du kannst es jetzt in den Chat einfügen.")}catch(e){prompt("Text kopieren:",x)}},
   install(){const d=deferredInstall;if(!d)return;deferredInstall=null;d.prompt();render(true)},
   pickimg(){const i=document.getElementById("fi");if(i)i.click()},
   rmimg(){keepName();myAv="";ls.set("ex_av","");render(true)},
