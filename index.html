@@ -306,7 +306,12 @@ const shuffle = a => {a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.flo
 const ss = {get(k){try{return sessionStorage.getItem(k)}catch(e){return null}},set(k,v){try{sessionStorage.setItem(k,v)}catch(e){}},del(k){try{sessionStorage.removeItem(k)}catch(e){}}};
 const ls = {get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
 let pid = ss.get("ex_pid"); if(!pid){pid=Math.random().toString(36).slice(2,12);ss.set("ex_pid",pid)}
-const OPTS = window.__PEER_OPTS || {};
+/* Vermittlungsserver in Reihenfolge: erst der eigene (falls eingetragen), dann der öffentliche von PeerJS.
+   Der Raum steht auf genau einem davon, Mitspieler probieren alle der Reihe nach. */
+const OWN="";
+const SERVERS = window.__SERVERS || (window.__PEER_OPTS?[window.__PEER_OPTS]:(OWN?[{host:OWN,port:443,path:"/",secure:true},{}]:[{}]));
+let srvI=0;
+if(OWN&&!window.__SERVERS&&!window.__PEER_OPTS){try{fetch("https://"+OWN+"/",{mode:"no-cors",cache:"no-store"}).catch(()=>{})}catch(e){}}
 const genCode = () => {const a="ABCDEFGHJKLMNPQRSTUVWXYZ";let c="";for(let i=0;i<4;i++)c+=a[Math.floor(Math.random()*a.length)];return c};
 
 /* ---------- Zustand ---------- */
@@ -334,7 +339,7 @@ async function getWake(){
 }
 function fail(m){cleanup();err=m;render()}
 /* Verbindungstest: findet heraus, ob Webzugang, WebSocket und WebRTC zum Vermittlungsserver klappen */
-const BUILD="2026-11-01.6";
+const BUILD="2026-11-01.7";
 const timeoutP=ms=>new Promise((_,r)=>setTimeout(()=>r(new Error("timeout")),ms));
 async function runDiag(){
   diag={lines:[],done:false,sum:""};
@@ -412,16 +417,16 @@ function keepAlive(p,n){
 }
 
 /* ---------- Host (hält den Spielstand) ---------- */
-function hostRoom(name,restore,n){
-  n=n||0;
-  role="host";status=(restore?"Raum wird wiederhergestellt …":"Raum wird erstellt …")+(n?` (Versuch ${n+1}/5)`:"");err="";render();
+function hostRoom(name,restore,n,si){
+  n=n||0;si=si||0;
+  role="host";status=(restore?"Raum wird wiederhergestellt …":"Raum wird erstellt …")+(n||si?` (Versuch ${n+1+si})`:"");err="";render();
   const code=restore?restore.S.code:genCode();
-  const p=new Peer("roundtwo-"+code,OPTS);peer=p;
+  const p=new Peer("roundtwo-"+code,SERVERS[si]);peer=p;
   let inited=false;
   p.on("open",()=>{
     getWake();
     if(inited){status="";bc();return}
-    inited=true;
+    inited=true;srvI=si;
     if(restore){
       S=restore.S;H=Object.assign(restore.H,{timer:null,pending:false,rate:{}});H.av=H.av||{};
       H.chat=H.chat||[];H.cn=H.cn||0;H.done=H.done||{};H.items=H.items||[];
@@ -450,14 +455,16 @@ function hostRoom(name,restore,n){
     if(e.type==="unavailable-id"){
       try{p.destroy()}catch(x){}
       if(restore){restore.tries=(restore.tries||0)+1;if(restore.tries<20)return void(retryT=setTimeout(()=>hostRoom(name,restore),3000));return fail("Der alte Raum konnte nicht wiederhergestellt werden.")}
-      hostRoom(name);
+      hostRoom(name,null,0,si);
     }
     else if(SOFT.has(e.type)){
       if(inited)keepAlive(p);
       else{
         try{p.destroy()}catch(x){}
         if(peer!==p)return;
-        if(n<RETRY_MS.length){status=`Verbinde mit dem Vermittlungsserver … (Versuch ${n+2}/5)`;render();clearTimeout(retryT);retryT=setTimeout(()=>hostRoom(name,restore,n+1),RETRY_MS[n])}
+        const more=si+1<SERVERS.length;
+        if(n<(more?1:RETRY_MS.length)){status=`Verbinde mit dem Vermittlungsserver … (Versuch ${n+2+si})`;render();clearTimeout(retryT);retryT=setTimeout(()=>hostRoom(name,restore,n+1,si),RETRY_MS[n])}
+        else if(more){status="Anderer Vermittlungsserver wird probiert …";render();clearTimeout(retryT);retryT=setTimeout(()=>hostRoom(name,restore,0,si+1),300)}
         else fail(netMsg(e));
       }
     }
@@ -654,18 +661,20 @@ function doReveal(){
 }
 
 /* ---------- Client ---------- */
-function joinRoom(code,name,keep,n){
-  n=n||0;
+function joinRoom(code,name,keep,n,si){
+  n=n||0;if(si==null)si=keep?srvI:0;
   role="client";err="";room={code,name};
-  if(!keep){S=null;chat=[];unread=0;chatOpen=false;status="Verbinde …"+(n?` (Versuch ${n+1}/5)`:"");lost=false;render()}
+  if(!keep){S=null;chat=[];unread=0;chatOpen=false;status="Verbinde …"+(n||si?` (Versuch ${n+1+si})`:"");lost=false;render()}
   ss.set("ex_room",JSON.stringify({code,name}));
   clearTimeout(retryT);
   try{peer&&peer.destroy()}catch(e){}
   getWake();
-  const p=new Peer(OPTS);peer=p;conn=null;
+  const p=new Peer(SERVERS[si]);peer=p;conn=null;
+  const more=si+1<SERVERS.length;
+  const nextSrv=()=>{try{p.destroy()}catch(x){}clearTimeout(retryT);retryT=setTimeout(()=>{if(role==="client"&&room)joinRoom(code,name,keep,0,si+1)},200)};
   let got=false;
   const again=ms=>{if(peer!==p)return;lost=true;render();clearTimeout(retryT);retryT=setTimeout(()=>{if(role==="client"&&room)joinRoom(code,name,true)},ms)};
-  const timer=setTimeout(()=>{if(!got&&peer===p){if(S)again(1000);else fail("Raum nicht erreichbar. Code prüfen und erneut versuchen.")}},15000);
+  const timer=setTimeout(()=>{if(!got&&peer===p){if(S)again(1000);else if(more)nextSrv();else fail("Raum nicht erreichbar. Code prüfen und erneut versuchen.")}},15000);
   p.on("open",()=>{
     const c=p.connect("roundtwo-"+code,{reliable:true});conn=c;
     c.on("open",()=>c.send({t:"hello",pid,name,av:myAv}));
@@ -676,7 +685,7 @@ function joinRoom(code,name,keep,n){
       if(d.t==="chat"){chatIn(d.m);return}
       if(d.t==="chats"){(d.m||[]).forEach(m=>chatIn(m,true));return}
       if(d.t==="avs"){for(const k in d.m){const a=cleanAv(d.m[k]);if(a)AV[k]=a}render();return}
-      if(d.t==="s"){got=true;clearTimeout(timer);S=d.s;status="";lost=false;render()}
+      if(d.t==="s"){got=true;srvI=si;clearTimeout(timer);S=d.s;status="";lost=false;render()}
       else if(d.t==="err"){clearTimeout(timer);fail(d.m)}
     });
     c.on("close",()=>{if(role==="client"&&conn===c)again(1500)});
@@ -685,10 +694,11 @@ function joinRoom(code,name,keep,n){
     clearTimeout(timer);if(peer!==p)return;
     if(got&&SOFT.has(e.type)&&conn&&conn.open)return;   /* direkte Verbindung zum Host steht, der Vermittlungsserver wird nur zum Beitreten gebraucht */
     if(S&&e.type!=="unavailable-id")again(3000);
+    else if(!S&&more&&(e.type==="peer-unavailable"||(SOFT.has(e.type)&&n>=1)))nextSrv();
     else if(SOFT.has(e.type)&&n<RETRY_MS.length){
       try{p.destroy()}catch(x){}
-      status=`Verbinde mit dem Vermittlungsserver … (Versuch ${n+2}/5)`;render();
-      clearTimeout(retryT);retryT=setTimeout(()=>{if(role==="client"&&room)joinRoom(code,name,false,n+1)},RETRY_MS[n]);
+      status=`Verbinde mit dem Vermittlungsserver … (Versuch ${n+2+si})`;render();
+      clearTimeout(retryT);retryT=setTimeout(()=>{if(role==="client"&&room)joinRoom(code,name,false,n+1,si)},RETRY_MS[n]);
     }
     else fail(e.type==="peer-unavailable"?"Raum nicht gefunden. Code prüfen.":netMsg(e));
   });
