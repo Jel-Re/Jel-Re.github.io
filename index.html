@@ -334,6 +334,7 @@ async function getWake(){
 }
 function fail(m){cleanup();err=m;render()}
 /* Verbindungstest: findet heraus, ob Webzugang, WebSocket und WebRTC zum Vermittlungsserver klappen */
+const BUILD="2026-11-01.5";
 const timeoutP=ms=>new Promise((_,r)=>setTimeout(()=>r(new Error("timeout")),ms));
 async function runDiag(){
   diag={lines:[],done:false,sum:""};
@@ -374,7 +375,7 @@ async function runDiag(){
     :"Alles in Ordnung. Wenn trotzdem ein Fehler erscheint, schick mir den genauen Text.";
   diag.done=true;render(true);
 }
-function diagText(){return ["Round Two Verbindungstest ("+location.host+")"].concat(diag.lines.map(l=>(l.ok===null?"- ":l.ok?"OK ":"FEHLER ")+l.t),[diag.sum]).join("\n")}
+function diagText(){return ["Round Two Verbindungstest ("+location.host+", Version "+BUILD+")"].concat(diag.lines.map(l=>(l.ok===null?"- ":l.ok?"OK ":"FEHLER ")+l.t),[diag.sum]).join("\n")}
 /* Kurzzeitige Probleme mit dem Vermittlungsserver sind kein Grund, einen Raum zu beenden */
 const SOFT=new Set(["network","server-error","socket-error","socket-closed","disconnected"]);
 const RETRY_MS=[1500,3000,5000,8000];
@@ -709,7 +710,8 @@ function vHome(){
     <input type="text" id="cd" maxlength="4" placeholder="Code" value="${esc(q.toUpperCase().slice(0,4))}" autocapitalize="characters" autocomplete="off" style="text-transform:uppercase;letter-spacing:.2em">
     <button class="btn sec" data-a="join">Beitreten</button></div>
   ${isStandalone()?"":deferredInstall?`<button class="btn sec" data-a="install">📲 Als App installieren</button>`:/iphone|ipad|ipod/i.test(navigator.userAgent)?`<p class="mut c" style="font-size:13px">📲 Als App: Teilen-Menü → „Zum Home-Bildschirm“.</p>`:""}
-  <button class="link" data-a="diag" style="align-self:center">Probleme beim Verbinden? Verbindung testen</button>`;
+  <button class="link" data-a="diag" style="align-self:center">Probleme beim Verbinden? Verbindung testen</button>
+  <p class="mut c" style="font-size:12px">Version ${BUILD}</p>`;
 }
 function vLobby(){
   const h=isHost(),on=S.players.filter(p=>p.online).length;
