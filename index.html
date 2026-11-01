@@ -159,8 +159,28 @@ const CATS = {
     "Wer hat am ehesten schon mal geklaut?","Wer hat am ehesten schon mal bei einer Prüfung betrogen?","Wer lügt am häufigsten ohne Grund?","Wer hat am ehesten schon mal jemandem das Herz gebrochen?","Wer würde am ehesten ein Geheimnis für Geld verraten?","Wer hat am ehesten schon mal einen Freund hintergangen?","Wer würde am ehesten einen Unfall verursachen und abhauen?","Wer hat am ehesten schon mal Social Media eines Ex gehackt?","Wer hat am ehesten schon mal was in einem Laden mitgehen lassen?","Wer würde am ehesten ein Erbe zurückhalten?","Wer hat am ehesten schon mal ein Date geghostet?","Wer ist am ehesten ein Gossip-Spion?","Wer würde am ehesten bei einem Streit lügen, um zu gewinnen?","Wer hat das größte schlechte Gewissen in diesem Raum?"]}
 };
 
-const MODES = {gossip:"Gossip Wheel", likely:"Wer am ehesten"};
-const MODEI = {gossip:"🎡", likely:"🗳️"};
+const MODES = {gossip:"Gossip Wheel", likely:"Wer am ehesten", never:"Ich hab noch nie", tod:"Wahrheit oder Pflicht"};
+const MODEI = {gossip:"🎡", likely:"🗳️", never:"🙋", tod:"🎭"};
+const MODEX = {gossip:"Challenge, Frage und Gerücht schreiben", likely:"Wer passt am ehesten?", never:"Wer es schon gemacht hat, trinkt", tod:"Reihum: Wahrheit oder Pflicht"};
+const MODEH = {
+  gossip:"Alle schreiben gleichzeitig: erst eine Person wählen und ihr eine Challenge geben, dann eine Frage, dann ein Gerücht. Danach wird Karte für Karte aufgedeckt (ohne Absender), der Host drückt Weiter. Wer nicht ehrlich antwortet oder die Challenge nicht macht, trinkt.",
+  likely:"Alle wählen geheim, wer am ehesten zur Frage passt. Wer am häufigsten gewählt wird, trinkt.",
+  never:"Ein Satz beginnt mit „Ich hab noch nie …“. Alle tippen geheim, ob sie es schon gemacht haben. Wer „Hab ich“ tippt, trinkt.",
+  tod:"Reihum ist jemand dran und wählt Wahrheit oder Pflicht. Ehrlich antworten oder die Challenge machen, sonst trinkt die Person."
+};
+/* "Ich hab noch nie ..." (je Kategorie) */
+const NIE = {
+harmlos:["im Kino geweint.","ein Geschenk weiterverschenkt.","eine ganze Serienstaffel in einer Nacht geschaut.","einen Termin komplett verschlafen.","mit meinem Haustier wie mit einem Menschen gesprochen."],
+freunde:["ein Geheimnis eines Freundes weitererzählt.","über jemanden aus dieser Runde gelästert.","einen Freund wegen eines Dates versetzt.","eine Krankheit vorgetäuscht, um ein Treffen abzusagen.","bei Freunden etwas kaputt gemacht und nichts gesagt."],
+peinlich:["die falsche Person angeschrieben.","beim Flirten völlig versagt.","in der Öffentlichkeit gestolpert und so getan, als wäre nichts.","bei einer Präsentation den Faden verloren.","aus Versehen „Ich dich auch“ gesagt."],
+party:["auf einer Party geschlafen.","den Heimweg nicht mehr gewusst.","betrunken den Ex angerufen.","aus einem Club geworfen worden.","einen kompletten Abend vergessen."],
+beziehung:["die Profile meines Ex angeschaut.","eine Beziehung per Nachricht beendet.","auf einem Date gelogen.","einen Ex zurückgenommen.","das Handy meines Partners durchsucht."],
+spicy:["in der Öffentlichkeit geknutscht.","jemanden aus dieser Runde attraktiv gefunden.","mit einer vergebenen Person geflirtet.","einen Kuss bereut.","bei einem Trinkspiel Kleidung ausgezogen."],
+dirty:["mit jemandem aus dem Freundeskreis geschlafen.","im Auto Sex gehabt.","an einem öffentlichen Ort Sex gehabt.","beim Sex den falschen Namen gesagt.","Spielzeug im Bett benutzt."],
+alltag:["krankgemacht, ohne krank zu sein.","in einer Bewerbung geflunkert.","das Konto überzogen.","etwas Teures gekauft und sofort bereut.","im Meeting geschlafen."],
+wild:["einen Promi getroffen und mich blamiert.","etwas Verrücktes für eine Wette getan.","spontan eine Reise gebucht.","mir spontan ein Tattoo oder Piercing stechen lassen.","bei einer Mutprobe mitgemacht."],
+dunkel:["etwas mitgehen lassen.","bei einer Prüfung gespickt.","jemanden absichtlich geghostet.","jemanden angelogen, nur um mich zu schützen.","einen Freund hintergangen."]
+};
 /* Zufalls-Vorschläge für das Gossip Wheel (Challenge, Frage, Gerücht), pro Kategorie */
 const CHAL = {
 harmlos:["Imitiere eine Person aus der Runde, bis sie errät, wer es ist.","Sing ein Lied deiner Wahl komplett vor, ohne Musik.","Rede 1 Minute lang nur in Fragen.","Mach 20 Kniebeugen, während alle mitzählen."],
@@ -383,12 +403,19 @@ function act(p,d){
     case "start":
       if(host&&S.phase==="lobby")startGame();break;
     case "ans":
-      if(S.phase!=="answer"||!S.players.some(x=>x.id===d.v)||d.v===p)return;
+      if(S.phase!=="answer")return;
+      if(S.round.type==="never"){if(d.v!=="ja"&&d.v!=="nein")return}
+      else if(!S.players.some(x=>x.id===d.v)||d.v===p)return;
       H.answers[p]=d.v;S.answered=Object.keys(H.answers);checkAll();bc();break;
     case "reveal":
       if(host&&S.phase==="answer")doReveal();break;
     case "next":
-      if(host&&S.phase==="reveal")nextRound();break;
+      if(host&&(S.phase==="reveal"||S.phase==="tcard"||S.phase==="choose"))nextRound();break;
+    case "tod":{
+      if(S.phase!=="choose"||p!==S.round.target||!["truth","dare"].includes(d.v))return;
+      const cat=pick(S.cats);
+      S.round.kind=d.v;S.round.cat=cat;S.round.text=d.v==="truth"?pick(QS[cat]):pick(CHAL[cat]);
+      S.phase="tcard";bc();break}
     case "sub":{
       if(S.phase!=="write")return;
       const k=d.kind,tx=censor(clip(d.text));
@@ -429,8 +456,13 @@ function startGame(){
   if(on.length<3||!S.cats.length)return;
   S.players=on;
   if(S.mode==="gossip"){S.pass=0;return startWrite()}
+  H.bag=[];
+  if(S.mode==="tod"){H.pool=Array(S.rounds).fill(0);H.idx=-1;S.total=S.rounds;return nextRound()}
   const pool=[];
-  S.cats.forEach(k=>CATS[k].q.forEach(q=>pool.push({cat:k,text:q})));
+  S.cats.forEach(k=>{
+    if(S.mode==="never")NIE[k].forEach(q=>pool.push({cat:k,text:q}));
+    else CATS[k].q.forEach(q=>pool.push({cat:k,text:q}));
+  });
   H.pool=shuffle(pool).slice(0,S.rounds);H.idx=-1;S.total=H.pool.length;
   nextRound();
 }
@@ -467,11 +499,23 @@ function cardAdvance(){
 function nextRound(){
   H.idx++;H.answers={};H.pending=false;S.answered=[];S.reveal=null;
   if(H.idx>=H.pool.length){S.phase="end";S.round=null;return bc()}
+  if(S.mode==="tod"){
+    const ok=id=>S.players.some(x=>x.id===id&&x.online);
+    H.bag=(H.bag||[]).filter(ok);
+    if(!H.bag.length)H.bag=shuffle(S.players.filter(p=>p.online).map(p=>p.id));
+    const tid=H.bag.pop()||S.hostPid;
+    S.round={idx:H.idx,type:"tod",target:tid,cat:null,kind:null,text:null};S.phase="choose";return bc();
+  }
   const it=H.pool[H.idx];
-  S.round={idx:H.idx,type:"likely",cat:it.cat,text:it.text};S.phase="answer";bc();
+  S.round={idx:H.idx,type:S.mode==="never"?"never":"likely",cat:it.cat,text:it.text};S.phase="answer";bc();
 }
 function doReveal(){
   const ans=H.answers,counts={};
+  if(S.round.type==="never"){
+    const yes=Object.keys(ans).filter(id=>ans[id]==="ja"&&S.players.some(x=>x.id===id));
+    const no=Object.keys(ans).filter(id=>ans[id]==="nein"&&S.players.some(x=>x.id===id));
+    S.reveal={yes,no};S.phase="reveal";return bc();
+  }
   Object.values(ans).forEach(v=>{if(S.players.some(x=>x.id===v))counts[v]=(counts[v]||0)+1});
   const max=Math.max(0,...Object.values(counts));
   const winners=max?Object.keys(counts).filter(k=>counts[k]===max):[];
@@ -543,8 +587,8 @@ function vLobby(){
   <div class="card"><h2>Spieler (${S.players.length})</h2>${S.players.map(p=>`<div class="pl"><span class="who"><span class="dot ${p.online?"":"off"}" style="margin-right:0"></span>${face(p.id,p.name,"f28")}${esc(p.name)}${p.id===S.hostPid?' <span class="mut">· Host</span>':""}</span></div>`).join("")}
     ${on<3?`<p class="mut" style="margin-top:10px;font-size:14px">Mindestens 3 Spieler nötig.</p>`:""}</div>`;
   if(h){
-    h2+=`<div class="card stack"><h2>Modus</h2><div class="seg">${Object.entries(MODES).map(([k,n])=>`<button class="${S.mode===k?"on":""}" data-a="mode" data-v="${k}">${MODEI[k]} ${n}</button>`).join("")}</div>
-    <p class="mut" style="font-size:14px">${S.mode==="gossip"?"Alle schreiben gleichzeitig: erst eine Person wählen und ihr eine Challenge geben, dann eine Frage, dann ein Gerücht. Danach wird Karte für Karte aufgedeckt (ohne Absender), der Host drückt Weiter. Wer nicht ehrlich antwortet oder die Challenge nicht macht, trinkt.":"Alle wählen geheim, wer am ehesten zur Frage passt. Wer am häufigsten gewählt wird, trinkt."}</p>
+    h2+=`<div class="card stack"><h2>Modus</h2>${Object.entries(MODES).map(([k,n])=>`<button class="opt ${S.mode===k?"on":""}" data-a="mode" data-v="${k}"><span class="who"><span class="emo">${MODEI[k]}</span><span>${n}<br><small>${MODEX[k]}</small></span></span>${S.mode===k?'<span class="ck">✓</span>':""}</button>`).join("")}
+    <p class="mut" style="font-size:14px">${MODEH[S.mode]}</p>
     ${S.mode==="gossip"?`<h2 style="margin-top:6px">Durchgänge</h2><div class="seg">${[1,2,3].map(n=>`<button class="${S.passes===n?"on":""}" data-a="passes" data-v="${n}">${n}</button>`).join("")}</div>`:`<h2 style="margin-top:6px">Runden</h2><div class="seg">${[5,10,15,20,30].map(n=>`<button class="${S.rounds===n?"on":""}" data-a="rounds" data-v="${n}">${n}</button>`).join("")}</div>`}</div>
     <div class="card stack"><h2>Gesperrte Wörter</h2>
       <div class="chips">${H.banned.map(w=>`<span class="chip">${esc(w)}<button data-a="unban" data-v="${esc(w)}" aria-label="Entfernen">✕</button></span>`).join("")||'<span class="mut" style="font-size:14px">Keine</span>'}</div>
@@ -561,8 +605,9 @@ function vLobby(){
 }
 function rhead(){
   const r=S.round;
+  const cat=r.cat?`${CATS[r.cat].e} ${esc(CATS[r.cat].n)} · `:"";
   return `${header()}<div class="prog"><i style="width:${r.idx/S.total*100}%"></i></div>
-  <div class="tag">Runde ${r.idx+1} / ${S.total} · ${CATS[r.cat].e} ${esc(CATS[r.cat].n)} · Wer am ehesten</div>`;
+  <div class="tag">Runde ${r.idx+1} / ${S.total} · ${cat}${esc(MODES[S.mode])}</div>`;
 }
 const KINDS=[{k:"challenge",n:"Challenge",f:"Aufgabe für",e:"🎯",c:"#ff9a1f"},{k:"question",n:"Frage",f:"Frage an",e:"💬",c:"#2f9bff"},{k:"gossip",n:"Gerücht",f:"Gerücht über",e:"🤫",c:"#f0407f"}];
 const KCARD={challenge:{l:"Challenge für",r:"Machen oder trinken."},question:{l:"Frage an",r:"Ehrlich antworten oder trinken."},gossip:{l:"Gerücht über",r:"Stimmt es? Ehrlich sagen oder trinken."}};
@@ -603,19 +648,44 @@ function vCard(){
 function vAnswer(){
   const r=S.round,need=required().length,got=S.answered.filter(id=>required().includes(id)).length;
   const done=S.answered.includes(pid);
-  const body=`<div class="q">${esc(r.text)}</div><div class="grid">${S.players.filter(p=>p.id!==pid).map(p=>`<button class="opt big ${mine===p.id?"on":""} ${p.online?"":"mut"}" data-a="ans" data-v="${esc(p.id)}">${esc(p.name)}</button>`).join("")}</div>`;
+  const body=r.type==="never"
+    ?`<div class="q">Ich hab noch nie ${esc(r.text)}</div><div class="grid">${[["ja","Hab ich"],["nein","Hab ich nicht"]].map(([v,l])=>`<button class="opt big ${mine===v?"on":""}" data-a="ans" data-v="${v}">${l}</button>`).join("")}</div>`
+    :`<div class="q">${esc(r.text)}</div><div class="grid">${S.players.filter(p=>p.id!==pid).map(p=>`<button class="opt big ${mine===p.id?"on":""} ${p.online?"":"mut"}" data-a="ans" data-v="${esc(p.id)}">${esc(p.name)}</button>`).join("")}</div>`;
   return `${rhead()}<div class="grow stack" style="justify-content:center">${body}
   <p class="c mut" style="font-size:14px">${done?"Antwort gespeichert (du kannst sie noch ändern). ":""}${got} / ${need} haben geantwortet</p></div>
   ${isHost()?`<button class="btn sec" data-a="reveal" ${got?"":"disabled"}>Jetzt auflösen</button>`:""}`;
 }
 function vReveal(){
   const r=S.round,v=S.reveal;
+  const last=r.idx+1>=S.total;
+  const nextBtn=isHost()?`<button class="btn" data-a="next">${last?"Fertig":"Weiter"}</button>`:`<p class="mut c">Warte auf ${esc(pname(S.hostPid))} …</p>`;
+  if(r.type==="never"){
+    const n=v.yes.length,tot=v.yes.length+v.no.length;
+    const rows=S.players.filter(p=>v.yes.includes(p.id)||v.no.includes(p.id)).sort((a,b)=>v.yes.includes(b.id)-v.yes.includes(a.id));
+    return `${rhead()}<div class="stack"><div class="q" style="font-size:20px">Ich hab noch nie ${esc(r.text)}</div>
+    <div class="card c"><span class="drink">🍻</span><p class="mut" style="font-size:13px;font-weight:700">Trinken</p>${n?`<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:6px 0">${v.yes.map(id=>face(id,pname(id),"f64")).join("")}</div><p style="font-size:26px;font-weight:800">${v.yes.map(id=>esc(pname(id))).join(" & ")}</p>`:`<p style="font-size:26px;font-weight:800;margin-top:6px">Niemand</p>`}<p class="mut" style="font-size:14px;margin-top:4px">${n} von ${tot} ${n===1?"hat":"haben"} es schon gemacht</p></div>
+    <div class="card">${rows.map(p=>`<div class="pl"><span class="who">${face(p.id,p.name,"f28")}${esc(p.name)}</span><b>${v.yes.includes(p.id)?"Hab ich":"Hab ich nicht"}</b></div>`).join("")}</div></div>
+    ${nextBtn}`;
+  }
   const rows=S.players.map(p=>[p,v.counts[p.id]||0]).sort((a,b)=>b[1]-a[1]);
   const max=rows[0][1];
-  const last=r.idx+1>=S.total;
   return `${rhead()}<div class="stack"><div class="q" style="font-size:20px">${esc(r.text)}</div>
   <div class="card c"><span class="drink">🍻</span><p class="mut" style="font-size:13px;font-weight:700">Trinkt</p>${v.winners.length?`<div style="display:flex;gap:8px;justify-content:center;margin:6px 0">${v.winners.map(id=>face(id,pname(id),"f64")).join("")}</div>`:""}<p style="font-size:30px;font-weight:700">${v.winners.length?v.winners.map(id=>esc(pname(id))).join(" & "):"Niemand"}</p>${max?`<p class="mut" style="font-size:14px">${max} ${max===1?"Schluck":"Schlücke"}</p>`:""}</div>
   <div class="card">${rows.map(([p,c])=>`<div class="bar ${c===max&&c>0?"top":""}"><div class="l"><span class="who">${face(p.id,p.name,"f28")}${esc(p.name)}</span><span>${c}</span></div><div class="b"><i data-w="${max?c/max*100:0}"></i></div></div>`).join("")}</div></div>
+  ${nextBtn}`;
+}
+const TOD={truth:{n:"Wahrheit",e:"💬",c:"#2f9bff",r:"Ehrlich antworten oder trinken."},dare:{n:"Pflicht",e:"🎯",c:"#ff9a1f",r:"Machen oder trinken."}};
+function vChoose(){
+  const r=S.round,me=r.target===pid,nm=esc(pname(r.target));
+  return `${rhead()}<div class="grow stack" style="justify-content:center"><div class="card c">${face(r.target,pname(r.target),"f88")}<p class="mut" style="font-size:13px;margin-top:8px;font-weight:700">Dran ist</p><p style="font-size:34px;font-weight:800">${me?"du":nm}</p></div>
+  ${me?`<div class="grid">${["truth","dare"].map(k=>`<button class="opt big" data-a="tod" data-v="${k}" style="flex-direction:column;gap:4px;border-color:${TOD[k].c}"><span style="font-size:30px">${TOD[k].e}</span>${TOD[k].n}</button>`).join("")}</div>`:`<p class="mut c">${nm} wählt Wahrheit oder Pflicht …</p>`}</div>
+  ${isHost()?`<button class="btn sec" data-a="next">Überspringen</button>`:""}`;
+}
+function vTcard(){
+  const r=S.round,K=TOD[r.kind],me=r.target===pid,last=r.idx+1>=S.total;
+  return `${rhead()}<div class="card c kcard" style="--k:${K.c};padding-top:28px"><span class="kind sticker" style="--k:${K.c}">${K.e} ${K.n}</span>${face(r.target,pname(r.target),"f88")}<p class="mut" style="font-size:13px;margin-top:8px;font-weight:700">${r.kind==="truth"?"Frage an":"Challenge für"}</p><p style="font-size:34px;font-weight:800">${me?"dich":esc(pname(r.target))}</p></div>
+  <div class="blk" style="--k:${K.c}"><p>${esc(r.text)}</p><p class="mut" style="font-size:14px;font-weight:600;margin-top:6px">${K.r}</p></div>
+  <div class="grow"></div>
   ${isHost()?`<button class="btn" data-a="next">${last?"Fertig":"Weiter"}</button>`:`<p class="mut c">Warte auf ${esc(pname(S.hostPid))} …</p>`}`;
 }
 function vEnd(){
@@ -639,6 +709,8 @@ function render(force){
     else if(S.phase==="write")html=vWrite();
     else if(S.phase==="card")html=vCard();
     else if(S.phase==="answer")html=vAnswer();
+    else if(S.phase==="choose")html=vChoose();
+    else if(S.phase==="tcard")html=vTcard();
     else if(S.phase==="reveal")html=vReveal();
     else html=vEnd();
     if(lost)html=`<div class="err">Verbindung verloren. <button class="link" data-a="reconnect" style="color:var(--text);text-decoration:underline">Neu verbinden</button></div>`+html;
@@ -743,6 +815,7 @@ const A = {
   leave(){if(S&&role==="host"&&!confirm("Raum schließen? Das beendet das Spiel für alle."))return;if(role==="client"&&conn&&conn.open)try{conn.send({t:"bye"})}catch(e){}cleanup();err="";render()},
   reconnect(){if(room)joinRoom(room.code,room.name,true)},
   mode(d){send({t:"set",mode:d.v,cats:S.cats,rounds:S.rounds})},
+  tod(d){send({t:"tod",v:d.v})},
   rounds(d){send({t:"set",mode:S.mode,cats:S.cats,rounds:+d.v})},
   cat(d){const c=S.cats.includes(d.v)?S.cats.filter(k=>k!==d.v):[...S.cats,d.v];send({t:"set",mode:S.mode,cats:c,rounds:S.rounds})},
   allcats(){send({t:"set",mode:S.mode,cats:Object.keys(CATS),rounds:S.rounds})},
