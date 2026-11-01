@@ -334,7 +334,7 @@ async function getWake(){
 }
 function fail(m){cleanup();err=m;render()}
 /* Verbindungstest: findet heraus, ob Webzugang, WebSocket und WebRTC zum Vermittlungsserver klappen */
-const BUILD="2026-11-01.5";
+const BUILD="2026-11-01.6";
 const timeoutP=ms=>new Promise((_,r)=>setTimeout(()=>r(new Error("timeout")),ms));
 async function runDiag(){
   diag={lines:[],done:false,sum:""};
@@ -356,6 +356,18 @@ async function runDiag(){
     sock.onclose=ev=>fin({ok:false,msg:"WebSocket wurde sofort geschlossen (Code "+ev.code+(ev.reason?", "+ev.reason:"")+")"});
   });
   add(ws.ok,ws.msg);
+  /* Zum Vergleich: WebSocket zu unabhaengigen oeffentlichen Servern (nur wenn der Hauptserver scheitert) */
+  let others=0,otherN=0;
+  if(!ws.ok&&http){
+    const probe=url=>new Promise(res=>{let done=false,sock;const fin=r=>{if(done)return;done=true;clearTimeout(tm);try{sock.close()}catch(e){}res(r)};
+      const tm=setTimeout(()=>fin(false),8000);
+      try{sock=new WebSocket(url)}catch(e){return fin(false)}
+      sock.onopen=()=>fin(true);sock.onerror=()=>fin(false);sock.onclose=()=>fin(false)});
+    const targets=[["Vergleichsserver 1","wss://ws.postman-echo.com/raw"],["Vergleichsserver 2","wss://echo.websocket.org/"]];
+    otherN=targets.length;
+    const rs=await Promise.all(targets.map(x=>probe(x[1])));
+    rs.forEach((r,i)=>{if(r)others++;add(r,targets[i][0]+(r?": WebSocket geht":": WebSocket geht auch nicht")+" (Vergleich)")});
+  }
   const rtc=await new Promise(res=>{
     if(typeof RTCPeerConnection==="undefined")return res({ok:false,msg:"WebRTC fehlt in diesem Browser"});
     let pc;try{pc=new RTCPeerConnection({iceServers:[{urls:"stun:stun.l.google.com:19302"}]})}catch(e){return res({ok:false,msg:"WebRTC lässt sich nicht starten ("+e.name+")"})}
@@ -370,7 +382,10 @@ async function runDiag(){
   });
   add(rtc.ok,rtc.msg);
   diag.sum=!http?"Der Vermittlungsserver ist von diesem Netz aus nicht erreichbar. Probier ein anderes Netz (WLAN oder Mobilfunk), schalte VPN oder iCloud Private Relay aus."
-    :!ws.ok?"Webseiten gehen, aber die WebSocket-Verbindung wird blockiert. Meist liegt das an einem Werbe- oder Inhaltsblocker, einem VPN, einem Firmen- oder Schulnetz oder an Sicherheitssoftware. Probier ein anderes Netz oder ein privates Fenster ohne Blocker."
+    :!ws.ok?(others>0
+      ?"Andere WebSocket-Verbindungen gehen, nur die zum Vermittlungsserver (peerjs.com) wird blockiert. Das ist meist eine Browser-Erweiterung, ein Inhaltsfilter oder ein VPN-Filter mit dieser Adresse auf der Liste. Probier ein privates Fenster oder einen anderen Browser, schalte Erweiterungen für diese Seite aus, prüfe einen Exit Node im VPN, oder nimm ein anderes Gerät als Host."
+      :otherN?"WebSocket-Verbindungen werden bei dir allgemein blockiert (auch zu anderen Servern). Meist liegt das an einem VPN, Firmen- oder Schulnetz, an Sicherheitssoftware oder einer Erweiterung. Probier ein privates Fenster, einen anderen Browser, ein anderes Netz, oder nimm ein anderes Gerät als Host."
+      :"Webseiten gehen, aber die WebSocket-Verbindung wird blockiert. Probier ein anderes Netz oder ein privates Fenster ohne Blocker.")
     :!rtc.ok?"Der Vermittlungsserver geht, aber direkte Verbindungen zwischen den Handys (WebRTC) nicht ganz. Im selben WLAN klappt es oft trotzdem."
     :"Alles in Ordnung. Wenn trotzdem ein Fehler erscheint, schick mir den genauen Text.";
   diag.done=true;render(true);
